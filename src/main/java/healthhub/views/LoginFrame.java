@@ -3,21 +3,26 @@ package healthhub.views;
 import healthhub.utils.ColorPalette;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class MainFrame extends JFrame {
+public class LoginFrame extends JFrame {
 
-    public MainFrame() {
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JLabel errorLabel;
+
+    public LoginFrame() {
         initFrame();
         initComponents();
     }
 
     private void initFrame() {
-        setTitle("HealthHub Clinic");
+        setTitle("HealthHub Clinic - Login");
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -36,7 +41,7 @@ public class MainFrame extends JFrame {
         add(mainPanel);
     }
 
-    // ============== LEFT PANEL (الأزرق) ==============
+    // ============== LEFT PANEL (نفس MainFrame بالظبط) ==============
     private JPanel createLeftPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(ColorPalette.PRIMARY);
@@ -44,7 +49,6 @@ public class MainFrame extends JFrame {
 
         panel.add(Box.createVerticalGlue());
 
-        // الدايرة الفاتحة جواها علامة +
         JLabel iconLabel = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -52,11 +56,9 @@ public class MainFrame extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // دايرة بلون أزرق فاتح شفاف (زي الصورة)
                 g2.setColor(new Color(255, 255, 255, 40));
                 g2.fillOval(0, 0, getWidth(), getHeight());
 
-                // علامة + باللون الأبيض في النص
                 g2.setColor(ColorPalette.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 70));
                 FontMetrics fm = g2.getFontMetrics();
@@ -72,16 +74,14 @@ public class MainFrame extends JFrame {
         iconLabel.setMaximumSize(new Dimension(120, 120));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // اسم العيادة
         JLabel nameLabel = new JLabel("HealthHub Clinic");
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         nameLabel.setForeground(ColorPalette.WHITE);
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // النص الصغير تحتيه
         JLabel subNameLabel = new JLabel("EPNU · Clinic Management System");
         subNameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        subNameLabel.setForeground(new Color(200, 215, 235)); // أبيض مزرق خفيف
+        subNameLabel.setForeground(new Color(200, 215, 235));
         subNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         panel.add(iconLabel);
@@ -94,52 +94,129 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // ============== RIGHT PANEL (الأبيض) ==============
+    // ============== RIGHT PANEL (الفورم) ==============
     private JPanel createRightPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(ColorPalette.BACKGROUND);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50));
+        panel.setBorder(new EmptyBorder(0, 50, 0, 50));
 
         panel.add(Box.createVerticalGlue());
 
-        JLabel welcomeLabel = new JLabel("Welcome");
-        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 38));
+        JLabel welcomeLabel = new JLabel("Welcome Back");
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         welcomeLabel.setForeground(ColorPalette.TEXT_DARK);
         welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel sloganLabel = new JLabel("Your health, our priority");
-        sloganLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        sloganLabel.setForeground(ColorPalette.TEXT_MEDIUM);
-        sloganLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel subLabel = new JLabel("Sign in to your account to continue");
+        subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subLabel.setForeground(ColorPalette.TEXT_MEDIUM);
+        subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel descLabel = new JLabel(
-                "<html><p style='width:280px;'>Manage your clinic with ease. "
-                        + "Book appointments, track patients, and deliver better care.</p></html>");
-        descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        descLabel.setForeground(ColorPalette.TEXT_MEDIUM);
-        descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Username
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        usernameLabel.setForeground(ColorPalette.TEXT_DARK);
+        usernameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton getStartedBtn = createStyledButton("Get Started  →");
-        getStartedBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        usernameField = new JTextField();
+        usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        usernameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        usernameField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCBD5E0), 1),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
 
-        getStartedBtn.addActionListener(new ActionListener() {
+        // Password
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        passwordLabel.setForeground(ColorPalette.TEXT_DARK);
+        passwordLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        passwordField = new JPasswordField();
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        passwordField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCBD5E0), 1),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+
+        // Error label
+        errorLabel = new JLabel(" ");
+        errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        errorLabel.setForeground(ColorPalette.DANGER);
+        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Login Button
+        JButton loginBtn = createStyledButton("Login");
+        loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        loginBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                openLoginFrame();
+                handleLogin();
             }
         });
 
+        getRootPane().setDefaultButton(loginBtn);
+
         panel.add(welcomeLabel);
         panel.add(Box.createVerticalStrut(8));
-        panel.add(sloganLabel);
-        panel.add(Box.createVerticalStrut(25));
-        panel.add(descLabel);
-        panel.add(Box.createVerticalStrut(40));
-        panel.add(getStartedBtn);
+        panel.add(subLabel);
+        panel.add(Box.createVerticalStrut(30));
+
+        panel.add(usernameLabel);
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(usernameField);
+        panel.add(Box.createVerticalStrut(15));
+
+        panel.add(passwordLabel);
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(passwordField);
+        panel.add(Box.createVerticalStrut(8));
+
+        panel.add(errorLabel);
+        panel.add(Box.createVerticalStrut(15));
+
+        panel.add(loginBtn);
+
         panel.add(Box.createVerticalGlue());
 
         return panel;
+    }
+
+    private void handleLogin() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            showError("Please enter username and password");
+            return;
+        }
+
+        // مؤقتاً لحد ما AuthService يجهز
+        if (username.equals("admin") && password.equals("admin123")) {
+            openDashboard();
+        } else {
+            showError("Invalid username or password");
+            passwordField.setText("");
+        }
+    }
+
+    private void showError(String message) {
+        errorLabel.setText(message);
+    }
+
+    private void openDashboard() {
+        JOptionPane.showMessageDialog(this,
+                "Login successful! Dashboard coming next!",
+                "HealthHub",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        // لما تعملي DashboardFrame:
+        // new DashboardFrame().setVisible(true);
+        // this.dispose();
     }
 
     private JButton createStyledButton(String text) {
@@ -162,8 +239,8 @@ public class MainFrame extends JFrame {
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
-        button.setPreferredSize(new Dimension(200, 50));
-        button.setMaximumSize(new Dimension(200, 50));
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        button.setPreferredSize(new Dimension(200, 45));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         button.addMouseListener(new MouseAdapter() {
@@ -181,11 +258,6 @@ public class MainFrame extends JFrame {
         return button;
     }
 
-    private void openLoginFrame() {
-        new LoginFrame().setVisible(true);
-        this.dispose();
-    }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -193,7 +265,7 @@ public class MainFrame extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            new MainFrame().setVisible(true);
+            new LoginFrame().setVisible(true);
         });
     }
 }
