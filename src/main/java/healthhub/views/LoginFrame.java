@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import healthhub.dao.UserDAO;
+import healthhub.models.User;
 
 public class LoginFrame extends JFrame {
 
@@ -196,8 +198,13 @@ public class LoginFrame extends JFrame {
         }
 
         // مؤقتاً لحد ما AuthService يجهز
-        if (username.equals("admin") && password.equals("admin123")) {
-            openDashboard();
+        // ✅ الكود الجديد
+        UserDAO userDAO = new UserDAO();
+        User user = userDAO.login(username, password);
+
+        if (user != null) {
+            dispose();
+            new DashboardFrame(user).setVisible(true);
         } else {
             showError("Invalid username or password");
             passwordField.setText("");

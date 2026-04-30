@@ -6,6 +6,8 @@ import healthhub.utils.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public class AppointmentDAO {
 
@@ -24,8 +26,8 @@ public class AppointmentDAO {
                         rs.getInt("id"),
                         rs.getInt("patient_id"),
                         rs.getInt("doctor_id"),
-                        rs.getString("date"),
-                        rs.getString("time"),
+                        rs.getObject("date", java.time.LocalDate.class),
+                        rs.getObject("time", java.time.LocalTime.class),
                         rs.getString("status"),
                         rs.getString("notes")
                 ));
@@ -46,8 +48,8 @@ public class AppointmentDAO {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, a.getPatientId());
             ps.setInt(2, a.getDoctorId());
-            ps.setString(3, a.getDate());
-            ps.setString(4, a.getTime());
+            ps.setObject(3, a.getDate());
+            ps.setObject(4, a.getTime());
             ps.setString(5, a.getStatus());
             ps.setString(6, a.getNotes());
             ps.executeUpdate();

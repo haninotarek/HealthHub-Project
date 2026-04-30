@@ -6,6 +6,8 @@ import healthhub.models.Appointment;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDate; //
+import java.time.LocalTime; //
 import java.util.List;
 
 public class AppointmentsPanel extends JPanel {
@@ -26,6 +28,7 @@ public class AppointmentsPanel extends JPanel {
         add(buildForm(), BorderLayout.WEST);
         add(buildTable(), BorderLayout.CENTER);
     }
+
     private JPanel buildHeader() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(Color.WHITE);
@@ -36,37 +39,28 @@ public class AppointmentsPanel extends JPanel {
         return p;
     }
 
-    // ── FORM ──
     private JPanel buildForm() {
         JPanel p = new JPanel(new GridLayout(8, 2, 8, 8));
         p.setBackground(Color.WHITE);
         p.setPreferredSize(new Dimension(320, 0));
         p.setBorder(BorderFactory.createTitledBorder("Book New Appointment"));
 
-        // Patient
         p.add(new JLabel("Patient:"));
         patientCombo = new JComboBox<>(new String[]{
-                "1 - Mohamed Ali",
-                "2 - Sara Khaled",
-                "3 - Omar Youssef"
+                "1 - Mohamed Ali", "2 - Sara Khaled", "3 - Omar Youssef"
         });
         p.add(patientCombo);
 
-        // Doctor
         p.add(new JLabel("Doctor:"));
         doctorCombo = new JComboBox<>(new String[]{
-                "1 - Dr. Ahmed Hassan",
-                "2 - Dr. Mona Salem",
-                "3 - Dr. Karim Nabil"
+                "1 - Dr. Ahmed Hassan", "2 - Dr. Mona Salem", "3 - Dr. Karim Nabil"
         });
         p.add(doctorCombo);
 
-        // Date
         p.add(new JLabel("Date (YYYY-MM-DD):"));
         dateField = new JTextField("2026-04-30");
         p.add(dateField);
 
-        // Time
         p.add(new JLabel("Time:"));
         timeCombo = new JComboBox<>(new String[]{
                 "09:00","09:30","10:00","10:30","11:00","11:30",
@@ -75,12 +69,10 @@ public class AppointmentsPanel extends JPanel {
         });
         p.add(timeCombo);
 
-        // Notes
         p.add(new JLabel("Notes:"));
         notesField = new JTextField();
         p.add(notesField);
 
-        // Save Button
         p.add(new JLabel(""));
         saveButton = new JButton("Save Appointment");
         saveButton.setBackground(new Color(0x11529A));
@@ -91,9 +83,11 @@ public class AppointmentsPanel extends JPanel {
 
         return p;
     }
+
     private JScrollPane buildTable() {
         String[] columns = {"#", "Patient ID", "Doctor ID", "Date", "Time", "Status"};
         tableModel = new DefaultTableModel(columns, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
 
@@ -105,72 +99,52 @@ public class AppointmentsPanel extends JPanel {
         table.getTableHeader().setForeground(Color.WHITE);
 
         loadData();
-
         return new JScrollPane(table);
     }
 
-    // ── LOAD DATA FROM DB ──
     private void loadData() {
         tableModel.setRowCount(0);
         List<Appointment> list = appointmentDAO.getAll();
         for (Appointment a : list) {
             tableModel.addRow(new Object[]{
-                    a.getId(),
-                    a.getPatientId(),
-                    a.getDoctorId(),
-                    a.getDate(),
-                    a.getTime(),
-                    a.getStatus()
+                    a.getId(), a.getPatientId(), a.getDoctorId(), a.getDate(), a.getTime(), a.getStatus()
             });
         }
     }
 
-    // ── SAVE ──
     private void saveAppointment() {
-        String date = dateField.getText().trim();
-        String time = (String) timeCombo.getSelectedItem();
+        String dateStr = dateField.getText().trim();
+        String timeStr = (String) timeCombo.getSelectedItem();
         String notes = notesField.getText().trim();
 
-        // Patient ID من اول حرف في الـ ComboBox
-        int patientId = Integer.parseInt(
-                patientCombo.getSelectedItem().toString().split(" - ")[0]
-        );
-        int doctorId = Integer.parseInt(
-                doctorCombo.getSelectedItem().toString().split(" - ")[0]
-        );
-
-        // Validation
-        if (date.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter a date.",
-                    "Validation Error",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (appointmentDAO.hasConflict(doctorId, date, time)) {
-            JOptionPane.showMessageDialog(this,
-                    "Doctor already booked at this time!",
-                    "Conflict Error",
-                    JOptionPane.ERROR_MESSAGE);
+        if (dateStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a date.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Save
-        Appointment a = new Appointment(
-                0, patientId, doctorId, date, time, "Scheduled", notes
-        );
+        try {
+            // تحويل النصوص إلى LocalDate و LocalTime
+            LocalDate appointmentDate = LocalDate.parse(dateStr);
+            LocalTime appointmentTime = LocalTime.parse(timeStr);
 
-        if (appointmentDAO.add(a)) {
-            JOptionPane.showMessageDialog(this,
-                    "Appointment saved successfully!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-            loadData();
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    "Failed to save appointment.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            int patientId = Integer.parseInt(patientCombo.getSelectedItem().toString().split(" - ")[0]);
+            int doctorId = Integer.parseInt(doctorCombo.getSelectedItem().toString().split(" - ")[0]);
+
+            if (appointmentDAO.hasConflict(doctorId, dateStr, timeStr)) {
+                JOptionPane.showMessageDialog(this, "Doctor already booked!", "Conflict Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Appointment a = new Appointment(0, patientId, doctorId, appointmentDate, appointmentTime, "Scheduled", notes);
+
+            if (appointmentDAO.add(a)) {
+                JOptionPane.showMessageDialog(this, "Saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to save.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Invalid date/time format!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
