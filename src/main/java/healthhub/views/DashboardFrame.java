@@ -118,49 +118,32 @@ public class DashboardFrame extends JFrame {
     // Nav Button — زرار واحد في الـ Sidebar
     // ============================================================
     private JButton buildNavButton(String text, Runnable action) {
-        // استبدال الإيموجيز برموز بسيطة عشان المربعات
-        String cleanText = text.replace("📊", "■").replace("👥", "■").replace("🩺", "■").replace("🚪", "■");
-
-        JButton btn = new JButton(cleanText) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                // السطرين دول هما اللي بيمسحوا "الخيال" وبيمنعوا تداخل الكلام
-                g.setColor(getBackground());
-                g.fillRect(0, 0, getWidth(), getHeight());
-                super.paintComponent(g);
-            }
-        };
-
+        JButton btn = new JButton(text);
         btn.setFont(FONT_NAV);
         btn.setForeground(new Color(255, 255, 255, 180));
         btn.setBackground(ColorPalette.PRIMARY);
-
-        // تعطيل كل الحاجات اللي بتعمل "خيال" أو خطوط
-        btn.setFocusPainted(false);
         btn.setBorderPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setFocusable(false);
-        btn.setOpaque(false); // خليناها false عشان إحنا بنرسم الخلفية يدوي فوق
-
+        btn.setFocusPainted(false);
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        // Hover effect
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(new Color(255, 255, 255, 30));
+                btn.setBackground(new Color(255, 255, 255, 20));
                 btn.setForeground(Color.WHITE);
-                btn.repaint(); // إجبار الزرار يعيد رسم نفسه فوراً
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
                 btn.setBackground(ColorPalette.PRIMARY);
                 btn.setForeground(new Color(255, 255, 255, 180));
-                btn.repaint(); // إجبار الزرار يعيد رسم نفسه فوراً
             }
         });
 
+        // Action
         btn.addActionListener(e -> action.run());
+
         return btn;
     }
 
