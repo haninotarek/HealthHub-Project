@@ -5,9 +5,11 @@ import healthhub.models.Doctor;
 import healthhub.utils.ColorPalette;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
@@ -15,8 +17,9 @@ public class DoctorPanel extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private DoctorDAO doctorDAO;
-    private JTextField txtName, txtSpec, txtPhone, txtEmail;
+    private JTextField txtName, txtSpec, txtPhone, txtEmail, txtSearch;
     private int selectedDoctorId = -1;
+    private TableRowSorter<DefaultTableModel> rowSorter;
 
     public DoctorPanel() {
         doctorDAO = new DoctorDAO();
@@ -51,21 +54,38 @@ public class DoctorPanel extends JPanel {
         btnWrapper.setBackground(ColorPalette.BACKGROUND);
         btnWrapper.add(btnAdd); btnWrapper.add(btnUpdate); btnWrapper.add(btnDelete);
 
-        // --- 3. الجدول (حل مشكلة اختفاء العناوين النهائي) ---
+        // --- 3. منطقة البحث (جديد) ---
+        JPanel searchPanel = new JPanel(new BorderLayout(10, 0));
+        searchPanel.setBackground(ColorPalette.BACKGROUND);
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        JLabel lblSearch = new JLabel("🔍 Search Doctor:");
+        lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        txtSearch = createStyledField();
+        txtSearch.setToolTipText("Search by name or specialization...");
+
+        searchPanel.add(lblSearch, BorderLayout.WEST);
+        searchPanel.add(txtSearch, BorderLayout.CENTER);
+
+        // --- 4. الجدول ---
         String[] columns = {"ID", "Name", "Specialization", "Phone", "Email"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
         table = new JTable(tableModel);
 
-        // الحل السحري: Custom Renderer للـ Header
+        // تفعيل خاصية الفلترة والترتيب
+        rowSorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(rowSorter);
+
+        // التنسيق الجمالي للـ Header
         table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel label = new JLabel(value.toString());
                 label.setOpaque(true);
-                label.setBackground(ColorPalette.PRIMARY); // أزرق غامق
-                label.setForeground(Color.WHITE);          // أبيض ناصع
+                label.setBackground(ColorPalette.PRIMARY);
+                label.setForeground(Color.WHITE);
                 label.setFont(new Font("Segoe UI", Font.BOLD, 13));
                 label.setHorizontalAlignment(JLabel.CENTER);
                 label.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
@@ -81,23 +101,52 @@ public class DoctorPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(210, 210, 210)));
 
+        // تجميع الجزء السفلي (البحث + الجدول)
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(ColorPalette.BACKGROUND);
+        bottomPanel.add(searchPanel, BorderLayout.NORTH);
+        bottomPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // تجميع اللوحة كاملة
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(ColorPalette.BACKGROUND);
         topPanel.add(inputPanel, BorderLayout.CENTER);
         topPanel.add(btnWrapper, BorderLayout.SOUTH);
 
         add(topPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.CENTER);
+
+        // --- منطق البحث التلقائي ---
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { filterTable(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { filterTable(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { filterTable(); }
+
+            private void filterTable() {
+                String text = txtSearch.getText();
+                if (text.trim().length() == 0) {
+                    rowSorter.setRowFilter(null);
+                } else {
+                    // بيبحث في خانة الاسم (1) وخانة التخصص (2)
+                    rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1, 2));
+                }
+            }
+        });
 
         // Selection Logic
         table.getSelectionModel().addListSelectionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                selectedDoctorId = (int) tableModel.getValueAt(row, 0);
-                txtName.setText((String) tableModel.getValueAt(row, 1));
-                txtSpec.setText((String) tableModel.getValueAt(row, 2));
-                txtPhone.setText((String) tableModel.getValueAt(row, 3));
-                txtEmail.setText((String) tableModel.getValueAt(row, 4));
+            int viewRow = table.getSelectedRow();
+            if (viewRow != -1) {
+                // مهم جداً: تحويل رقم السطر من "شكل الجدول" لـ "الداتا الحقيقية" عشان الفلتر
+                int modelRow = table.convertRowIndexToModel(viewRow);
+                selectedDoctorId = (int) tableModel.getValueAt(modelRow, 0);
+                txtName.setText((String) tableModel.getValueAt(modelRow, 1));
+                txtSpec.setText((String) tableModel.getValueAt(modelRow, 2));
+                txtPhone.setText((String) tableModel.getValueAt(modelRow, 3));
+                txtEmail.setText((String) tableModel.getValueAt(modelRow, 4));
             }
         });
 
@@ -155,6 +204,7 @@ public class DoctorPanel extends JPanel {
 
     private void clearFields() {
         txtName.setText(""); txtSpec.setText(""); txtPhone.setText(""); txtEmail.setText("");
+        txtSearch.setText("");
         selectedDoctorId = -1;
         table.clearSelection();
     }
