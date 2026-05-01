@@ -8,54 +8,36 @@ import java.awt.*;
 
 public class DashboardFrame extends JFrame {
 
-    // ============================================================
-    // Constants
-    // ============================================================
-    private static final int SIDEBAR_WIDTH = 200;
-    private static final Font FONT_LOGO    = new Font("Segoe UI", Font.BOLD,  16);
+    private static final int SIDEBAR_WIDTH = 220;
+    private static final Font FONT_LOGO    = new Font("Segoe UI", Font.BOLD,  18);
     private static final Font FONT_SUB     = new Font("Segoe UI", Font.PLAIN, 11);
     private static final Font FONT_NAV     = new Font("Segoe UI", Font.BOLD,  13);
 
-    // ============================================================
-    // Fields
-    // ============================================================
-    private final User currentUser;       // اليوزر اللي دخل
-    private JPanel contentArea;           // المنطقة اللي بتتغير
+    private final User currentUser;
+    private JPanel contentArea;
 
-    // ============================================================
-    // Constructor
-    // ============================================================
     public DashboardFrame(User user) {
         this.currentUser = user;
-
         setupFrame();
         buildUI();
-        showPanel(new DashboardPanel()); // الشاشة الأولى
+        showPanel(new DashboardPanel());
     }
 
-    // ============================================================
-    // Frame Settings
-    // ============================================================
     private void setupFrame() {
         setTitle("HealthHub Clinic — Dashboard");
-        setSize(900, 600);
-        setMinimumSize(new Dimension(800, 500));
+        setSize(1000, 700);
+        setMinimumSize(new Dimension(850, 550));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); // في النص
+        setLocationRelativeTo(null);
+        setResizable(true); // تفعيل زر التكبير (المربع)
         setLayout(new BorderLayout());
     }
 
-    // ============================================================
-    // Build UI — Sidebar + Content Area
-    // ============================================================
     private void buildUI() {
         add(buildSidebar(),     BorderLayout.WEST);
         add(buildContentArea(), BorderLayout.CENTER);
     }
 
-    // ============================================================
-    // Sidebar
-    // ============================================================
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel(new BorderLayout());
         sidebar.setBackground(ColorPalette.PRIMARY);
@@ -68,131 +50,128 @@ public class DashboardFrame extends JFrame {
         return sidebar;
     }
 
-    // ============================================================
-    // Sidebar — Logo
-    // ============================================================
     private JPanel buildSidebarTop() {
         JPanel top = new JPanel();
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.setBackground(ColorPalette.PRIMARY);
-        top.setBorder(BorderFactory.createEmptyBorder(24, 20, 16, 20));
+        top.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
 
-        JLabel lblName = new JLabel("HealthHub");
+        JLabel lblName = new JLabel("HEALTH HUB");
         lblName.setFont(FONT_LOGO);
         lblName.setForeground(Color.WHITE);
 
-        JLabel lblSub = new JLabel("EPNU Clinic System");
+        JLabel lblSub = new JLabel("Clinic Management System");
         lblSub.setFont(FONT_SUB);
-        lblSub.setForeground(new Color(255, 255, 255, 128));
+        lblSub.setForeground(new Color(255, 255, 255, 150));
 
         top.add(lblName);
-        top.add(Box.createVerticalStrut(4));
+        top.add(Box.createVerticalStrut(5));
         top.add(lblSub);
-        top.add(Box.createVerticalStrut(16));
+        top.add(Box.createVerticalStrut(20));
 
-        // Divider
         JSeparator sep = new JSeparator();
-        sep.setForeground(new Color(255, 255, 255, 40));
+        sep.setForeground(new Color(255, 255, 255, 50));
         top.add(sep);
 
         return top;
     }
 
-    // ============================================================
-    // Sidebar — Nav Buttons
-    // ============================================================
     private JPanel buildNavButtons() {
         JPanel nav = new JPanel();
         nav.setLayout(new BoxLayout(nav, BoxLayout.Y_AXIS));
         nav.setBackground(ColorPalette.PRIMARY);
-        nav.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+        nav.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
 
-        nav.add(buildNavButton("📊  Dashboard",    () -> showPanel(new DashboardPanel())));
-        nav.add(buildNavButton("👥  Patients",     () -> showPanel(new PatientUI())));
-        nav.add(buildNavButton("🩺  Doctors",      () -> showPanel(new DoctorPanel())));
-        nav.add(buildNavButton("■  Appointments", () -> showPanel(new AppointmentsPanel())));
+        // الأسامي مطابقة للصور اللي في فولدر images عندك بالظبط
+        nav.add(buildNavButton("Dashboard",    "dashboard.png",   () -> showPanel(new DashboardPanel())));
+        nav.add(buildNavButton("Patients",     "petient.png",     () -> showPanel(new PatientUI()))); // لاحظي "petient" زي ما مسمياها
+        nav.add(buildNavButton("Doctors",      "doctor.png",      () -> showPanel(new DoctorPanel())));
+        nav.add(buildNavButton("Appointments", "appointment.png", () -> showPanel(new AppointmentsPanel())));
+
         return nav;
     }
 
-    // ============================================================
-    // Nav Button — زرار واحد في الـ Sidebar
-    // ============================================================
-    private JButton buildNavButton(String text, Runnable action) {
-        JButton btn = new JButton(text);
+    private JButton buildNavButton(String text, String iconName, Runnable action) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                // منع تداخل الكلام (الخيال) بمسح خلفية الزرار يدوياً
+                if (isOpaque()) {
+                    g.setColor(getBackground());
+                    g.fillRect(0, 0, getWidth(), getHeight());
+                }
+                super.paintComponent(g);
+            }
+        };
+
+        try {
+            // المسار المعدل بناءً على صورة ترتيب الفولدرات اللي بعتيها
+            java.net.URL imgURL = getClass().getResource("/images/" + iconName);
+            if (imgURL != null) {
+                ImageIcon originalIcon = new ImageIcon(imgURL);
+                Image img = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                btn.setIcon(new ImageIcon(img));
+            } else {
+                System.err.println("❌ Image not found: /images/" + iconName);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         btn.setFont(FONT_NAV);
         btn.setForeground(new Color(255, 255, 255, 180));
         btn.setBackground(ColorPalette.PRIMARY);
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setIconTextGap(15); // مسافة بين الصورة والنص
+        btn.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 20));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Hover effect
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(new Color(255, 255, 255, 20));
+                btn.setBackground(new Color(255, 255, 255, 30)); // تفتيح بسيط عند المرور
                 btn.setForeground(Color.WHITE);
+                btn.repaint();
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
                 btn.setBackground(ColorPalette.PRIMARY);
                 btn.setForeground(new Color(255, 255, 255, 180));
+                btn.repaint();
             }
         });
 
-        // Action
         btn.addActionListener(e -> action.run());
-
         return btn;
     }
 
-    // ============================================================
-    // Logout Button
-    // ============================================================
     private JPanel buildLogoutButton() {
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setBackground(ColorPalette.PRIMARY);
-        bottom.setBorder(BorderFactory.createEmptyBorder(8, 0, 16, 0));
+        bottom.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
 
-        JButton btnLogout = new JButton("🚪  Logout");
-        btnLogout.setFont(FONT_NAV);
-        btnLogout.setForeground(ColorPalette.DANGER);
-        btnLogout.setBackground(ColorPalette.PRIMARY);
-        btnLogout.setBorderPainted(false);
-        btnLogout.setFocusPainted(false);
-        btnLogout.setHorizontalAlignment(SwingConstants.LEFT);
-        btnLogout.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
-        btnLogout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        btnLogout.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Are you sure you want to logout?",
-                    "Logout",
-                    JOptionPane.YES_NO_OPTION
-            );
+        // تأكدي إن فيه صورة اسمها logout.png في فولدر images
+        JButton btnLogout = buildNavButton("Logout", "logout.png", () -> {
+            int confirm = JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 dispose();
                 new LoginFrame().setVisible(true);
             }
         });
+        btnLogout.setForeground(new Color(255, 100, 100));
 
         bottom.add(btnLogout, BorderLayout.CENTER);
         return bottom;
     }
 
-    // ============================================================
-    // Content Area — المنطقة اللي بتتغير
-    // ============================================================
     private JPanel buildContentArea() {
         contentArea = new JPanel(new BorderLayout());
         contentArea.setBackground(ColorPalette.BACKGROUND);
         return contentArea;
     }
-
-    // showPanel — بتبدل المحتوى
 
     public void showPanel(JPanel panel) {
         contentArea.removeAll();
