@@ -29,7 +29,6 @@ public class MainFrame extends JFrame {
 
         JPanel leftPanel = createLeftPanel();   // كل panel عبارة عن   container  بيشيل جواه عناصر زي ( buttons , labels)
         JPanel rightPanel = createRightPanel();
-
         mainPanel.add(leftPanel);
         mainPanel.add(rightPanel);
             //  لازم نضيفها عشان تظهر
