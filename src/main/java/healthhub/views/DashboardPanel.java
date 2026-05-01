@@ -247,19 +247,18 @@ public class DashboardPanel extends JPanel {
     // ── Load Recent Appointments ───────────────────
     private void loadRecentAppointments() {
         String sql = """
-            SELECT TOP 10
-                a.id,
-                p.name AS patient_name,
-                d.name AS doctor_name,
-                a.date,
-                a.time,
-                a.status
-            FROM appointments a
-            JOIN patients p ON a.patient_id = p.id
-            JOIN doctors  d ON a.doctor_id  = d.id
-            ORDER BY a.date DESC, a.time DESC
-            """;
-
+             SELECT TOP 10
+                 a.id,
+                 p.name AS patient_name,
+                 d.name AS doctor_name,
+                 a.date,
+                 a.time,
+                 a.status
+             FROM appointments a
+             JOIN patients p ON a.patient_id = p.id
+             JOIN doctors d ON a.doctor_id = d.id
+             ORDER BY a.date DESC, a.time DESC
+             """;
         try (Connection conn = DBConnection.getConnection();
              Statement  stmt = conn.createStatement();
              ResultSet  rs   = stmt.executeQuery(sql)) {
