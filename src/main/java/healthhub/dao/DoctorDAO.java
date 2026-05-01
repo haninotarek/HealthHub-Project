@@ -43,4 +43,33 @@ public class DoctorDAO {
         }
         return doctors;
     }
+    // دالة الحذف
+    public boolean deleteDoctor(int id) {
+        String sql = "DELETE FROM doctors WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // دالة التعديل
+    public boolean updateDoctor(Doctor doctor) {
+        String sql = "UPDATE doctors SET name=?, specialization=?, phone=?, email=? WHERE id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, doctor.getName());
+            pstmt.setString(2, doctor.getSpecialization());
+            pstmt.setString(3, doctor.getPhone());
+            pstmt.setString(4, doctor.getEmail());
+            pstmt.setInt(5, doctor.getId());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
