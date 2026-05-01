@@ -1,70 +1,50 @@
 package healthhub.models;
 
 public class Patient {
-    private int id;
-    private String name;
-    private String phone;
-    private int age;
-    private String gender;
-    private String address;
 
-    public Patient() {
-    }
+    // --- Fields matching the database columns ---
+    private int id;       // Auto-incremented primary key
+    private String name;  // Patient full name
+    private String phone; // Contact phone number
+    private int age;      // Patient age
+    private String gender; // "Male" or "Female"
 
-    public Patient(int id, String name, String phone, int age, String gender, String address) {
+    // -----------------------------------------------
+    // Constructor — used when creating a new Patient
+    // object from a database row or from a form
+    // -----------------------------------------------
+    public Patient(int id, String name, String phone, int age, String gender) {
         this.id = id;
         this.name = name;
         this.phone = phone;
         this.age = age;
         this.gender = gender;
-        this.address = address;
     }
 
-    public int getId() {
-        return id;
-    }
+    // -----------------------------------------------
+    // Getters — used to read the patient's data
+    // -----------------------------------------------
+    public int getId()       { return id; }
+    public String getName()  { return name; }
+    public String getPhone() { return phone; }
+    public int getAge()      { return age; }
+    public String getGender(){ return gender; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    // -----------------------------------------------
+    // Setters — used when editing a patient's data
+    // -----------------------------------------------
+    public void setId(int id)          { this.id = id; }
+    public void setName(String name)   { this.name = name; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public void setAge(int age)        { this.age = age; }
+    public void setGender(String gender){ this.gender = gender; }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
+    // -----------------------------------------------
+    // toString — useful for debugging
+    // -----------------------------------------------
+    @Override
+    public String toString() {
+        return "Patient{id=" + id + ", name='" + name + "', phone='" + phone +
+                "', age=" + age + ", gender='" + gender + "'}";
     }
 }
