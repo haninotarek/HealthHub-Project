@@ -108,8 +108,8 @@ public class DashboardFrame extends JFrame {
         nav.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
 
         nav.add(buildNavButton("📊  Dashboard",    () -> showPanel(new DashboardPanel())));
-        nav.add(buildNavButton("👥  Patients",     () -> showPanel(new PatientUI()))); // بعدين
-        nav.add(buildNavButton("🩺  Doctors",      () -> showPanel(new JPanel()))); // بعدين
+        nav.add(buildNavButton("👥  Patients",     () -> showPanel(new PatientUI())));
+        nav.add(buildNavButton("🩺  Doctors",      () -> showPanel(new DoctorPanel())));
         nav.add(buildNavButton("■  Appointments", () -> showPanel(new AppointmentsPanel())));
         return nav;
     }
