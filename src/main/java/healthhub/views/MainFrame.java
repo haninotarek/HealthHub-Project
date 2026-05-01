@@ -29,7 +29,6 @@ public class MainFrame extends JFrame {
 
         JPanel leftPanel = createLeftPanel();
         JPanel rightPanel = createRightPanel();
-
         mainPanel.add(leftPanel);
         mainPanel.add(rightPanel);
 
