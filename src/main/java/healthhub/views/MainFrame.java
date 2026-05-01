@@ -12,37 +12,37 @@ import java.awt.event.MouseEvent;
 public class MainFrame extends JFrame {
 
     public MainFrame() {
-        initFrame();
-        initComponents();
+        initFrame();   // بيظبط شكل الشباك
+        initComponents(); //  WINDOW يحط العناصر جوا ال
     }
 
     private void initFrame() {
         setTitle("HealthHub Clinic");
         setSize(900, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   // دي لما ال USER يقفل البرنامج يقفل كه
+        setLocationRelativeTo(null);   // بيظهرها ف نص الشاشه
+        setResizable(false);    // م هيقدر  يكبرها او يصغرها
     }
 
     private void initComponents() {
-        JPanel mainPanel = new JPanel(new GridLayout(1, 2));
+        JPanel mainPanel = new JPanel(new GridLayout(1, 2)); // 1 row 2 colums
 
-        JPanel leftPanel = createLeftPanel();
+        JPanel leftPanel = createLeftPanel();   // كل panel عبارة عن   container  بيشيل جواه عناصر زي ( buttons , labels)
         JPanel rightPanel = createRightPanel();
 
         mainPanel.add(leftPanel);
         mainPanel.add(rightPanel);
-
+            //  لازم نضيفها عشان تظهر
         add(mainPanel);
     }
 
     // ============== LEFT PANEL (الأزرق) ==============
     private JPanel createLeftPanel() {
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel();  // Empty panel
         panel.setBackground(ColorPalette.PRIMARY);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));  // هتترتب فوق بعض
 
-        panel.add(Box.createVerticalGlue());
+        panel.add(Box.createVerticalGlue()); // عملنا مرونه للنص
 
         // الدايرة الفاتحة جواها علامة +
         JLabel iconLabel = new JLabel() {
