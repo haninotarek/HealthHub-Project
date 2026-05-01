@@ -43,7 +43,7 @@ public class LoginFrame extends JFrame {
         add(mainPanel);
     }
 
-    // ============== LEFT PANEL (نفس MainFrame بالظبط) ==============
+    // ============== LEFT PANEL ==============
     private JPanel createLeftPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(ColorPalette.PRIMARY);
@@ -51,30 +51,18 @@ public class LoginFrame extends JFrame {
 
         panel.add(Box.createVerticalGlue());
 
-        JLabel iconLabel = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-
-                g2.setColor(new Color(255, 255, 255, 40));
-                g2.fillOval(0, 0, getWidth(), getHeight());
-
-                g2.setColor(ColorPalette.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 70));
-                FontMetrics fm = g2.getFontMetrics();
-                String text = "+";
-                int x = (getWidth() - fm.stringWidth(text)) / 2;
-                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
-                g2.drawString(text, x, y);
-
-                g2.dispose();
-            }
-        };
-        iconLabel.setPreferredSize(new Dimension(120, 120));
-        iconLabel.setMaximumSize(new Dimension(120, 120));
+        // ===== صورة اللوجو =====
+        JLabel iconLabel = new JLabel();
+        java.net.URL logoURL = getClass().getResource("/images/logo.png");
+        if (logoURL != null) {
+            ImageIcon originalIcon = new ImageIcon(logoURL);
+            Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            iconLabel.setIcon(new ImageIcon(scaledImage));
+        }
+        iconLabel.setPreferredSize(new Dimension(150, 150));
+        iconLabel.setMaximumSize(new Dimension(150, 150));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // =======================
 
         JLabel nameLabel = new JLabel("HealthHub Clinic");
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -197,8 +185,6 @@ public class LoginFrame extends JFrame {
             return;
         }
 
-        // مؤقتاً لحد ما AuthService يجهز
-        // ✅ الكود الجديد
         UserDAO userDAO = new UserDAO();
         User user = userDAO.login(username, password);
 
@@ -220,10 +206,6 @@ public class LoginFrame extends JFrame {
                 "Login successful! Dashboard coming next!",
                 "HealthHub",
                 JOptionPane.INFORMATION_MESSAGE);
-
-        // لما تعملي DashboardFrame:
-        // new DashboardFrame().setVisible(true);
-        // this.dispose();
     }
 
     private JButton createStyledButton(String text) {

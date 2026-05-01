@@ -8,79 +8,63 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URL;
 
 public class MainFrame extends JFrame {
 
     public MainFrame() {
-        initFrame();   // بيظبط شكل الشباك
-        initComponents(); //  WINDOW يحط العناصر جوا ال
+        initFrame();
+        initComponents();
     }
 
     private void initFrame() {
         setTitle("HealthHub Clinic");
         setSize(900, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   // دي لما ال USER يقفل البرنامج يقفل كه
-        setLocationRelativeTo(null);   // بيظهرها ف نص الشاشه
-        setResizable(false);    // م هيقدر  يكبرها او يصغرها
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
     }
 
     private void initComponents() {
-        JPanel mainPanel = new JPanel(new GridLayout(1, 2)); // 1 row 2 colums
+        JPanel mainPanel = new JPanel(new GridLayout(1, 2));
 
-        JPanel leftPanel = createLeftPanel();   // كل panel عبارة عن   container  بيشيل جواه عناصر زي ( buttons , labels)
+        JPanel leftPanel = createLeftPanel();
         JPanel rightPanel = createRightPanel();
         mainPanel.add(leftPanel);
         mainPanel.add(rightPanel);
-            //  لازم نضيفها عشان تظهر
+
         add(mainPanel);
     }
 
     // ============== LEFT PANEL (الأزرق) ==============
     private JPanel createLeftPanel() {
-        JPanel panel = new JPanel();  // Empty panel
+        JPanel panel = new JPanel();
         panel.setBackground(ColorPalette.PRIMARY);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));  // هتترتب فوق بعض
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        panel.add(Box.createVerticalGlue()); // عملنا مرونه للنص
+        panel.add(Box.createVerticalGlue());
 
-        // الدايرة الفاتحة جواها علامة +
-        JLabel iconLabel = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // دايرة بلون أزرق فاتح شفاف (زي الصورة)
-                g2.setColor(new Color(255, 255, 255, 40));
-                g2.fillOval(0, 0, getWidth(), getHeight());
-
-                // علامة + باللون الأبيض في النص
-                g2.setColor(ColorPalette.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 70));
-                FontMetrics fm = g2.getFontMetrics();
-                String text = "+";
-                int x = (getWidth() - fm.stringWidth(text)) / 2;
-                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
-                g2.drawString(text, x, y);
-
-                g2.dispose();
-            }
-        };
-        iconLabel.setPreferredSize(new Dimension(120, 120));
-        iconLabel.setMaximumSize(new Dimension(120, 120));
+        // ===== صورة اللوجو =====
+        JLabel iconLabel = new JLabel();
+        URL logoURL = getClass().getResource("/images/logo.png");
+        if (logoURL != null) {
+            ImageIcon originalIcon = new ImageIcon(logoURL);
+            Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            iconLabel.setIcon(new ImageIcon(scaledImage));
+        }
+        iconLabel.setPreferredSize(new Dimension(150, 150));
+        iconLabel.setMaximumSize(new Dimension(150, 150));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // =======================
 
-        // اسم العيادة
         JLabel nameLabel = new JLabel("HealthHub Clinic");
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         nameLabel.setForeground(ColorPalette.WHITE);
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // النص الصغير تحتيه
         JLabel subNameLabel = new JLabel("EPNU · Clinic Management System");
         subNameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        subNameLabel.setForeground(new Color(200, 215, 235)); // أبيض مزرق خفيف
+        subNameLabel.setForeground(new Color(200, 215, 235));
         subNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         panel.add(iconLabel);
