@@ -21,10 +21,10 @@ public class DashboardPanel extends JPanel {
     private static final Color WHITE      = Color.WHITE;
     // ───────────────────────────────────────────────
 
-    private static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,  13);
-    private static final Font FONT_VALUE  = new Font("Segoe UI", Font.BOLD,  28);
-    private static final Font FONT_HEADER = new Font("Segoe UI", Font.BOLD,  12);
-    private static final Font FONT_CELL   = new Font("Segoe UI", Font.PLAIN, 12);
+    private static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,  15); // ← كبرنا
+    private static final Font FONT_VALUE  = new Font("Segoe UI", Font.BOLD,  32); // ← كبرنا
+    private static final Font FONT_HEADER = new Font("Segoe UI", Font.BOLD,  13);
+    private static final Font FONT_CELL   = new Font("Segoe UI", Font.PLAIN, 13);
 
     private final JLabel lblPatients     = new JLabel("0");
     private final JLabel lblDoctors      = new JLabel("0");
@@ -59,7 +59,7 @@ public class DashboardPanel extends JPanel {
         lblPage.setForeground(PRIMARY);
 
         JLabel lblAdmin = new JLabel("  👤 Admin  ");
-        lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblAdmin.setForeground(WHITE);
         lblAdmin.setBackground(PRIMARY);
         lblAdmin.setOpaque(true);
@@ -84,7 +84,7 @@ public class DashboardPanel extends JPanel {
     private JPanel buildStatsRow() {
         JPanel row = new JPanel(new GridLayout(1, 4, 12, 0));
         row.setOpaque(false);
-        row.setPreferredSize(new Dimension(0, 100));
+        row.setPreferredSize(new Dimension(0, 110)); // ← كبرنا الـ height شوية
 
         row.add(buildStatCard("Total Patients",  lblPatients));
         row.add(buildStatCard("Total Doctors",   lblDoctors));
@@ -96,11 +96,11 @@ public class DashboardPanel extends JPanel {
 
     // ── Stat Card ──────────────────────────────────
     private JPanel buildStatCard(String title, JLabel valueLabel) {
-        JPanel card = new JPanel(new BorderLayout(0, 6));
+        JPanel card = new JPanel(new BorderLayout(0, 8));
         card.setBackground(WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(GRAY, 1, true),
-                BorderFactory.createEmptyBorder(14, 16, 14, 16)
+                BorderFactory.createEmptyBorder(16, 18, 16, 18)
         ));
 
         JLabel lblTitle = new JLabel(title);
@@ -145,7 +145,7 @@ public class DashboardPanel extends JPanel {
         };
 
         table.setFont(FONT_CELL);
-        table.setRowHeight(34);
+        table.setRowHeight(36);
         table.setShowGrid(true);
         table.setGridColor(new Color(0xE8E8E8));
         table.setIntercellSpacing(new Dimension(1, 1));
@@ -164,15 +164,24 @@ public class DashboardPanel extends JPanel {
                 l.setBackground(PRIMARY);
                 l.setForeground(WHITE);
                 l.setFont(FONT_HEADER);
-                l.setHorizontalAlignment(CENTER);
+                l.setHorizontalAlignment(CENTER); // ← النص في النص
                 l.setOpaque(true);
                 l.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, PRIMARY_LT));
                 return l;
             }
         });
         header.setBackground(PRIMARY);
-        header.setPreferredSize(new Dimension(0, 38));
+        header.setPreferredSize(new Dimension(0, 40));
         header.setReorderingAllowed(false);
+
+        // ── Center Renderer لكل الأعمدة ──
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != 5) {
+                table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+            }
+        }
 
         // ── Status Renderer ──
         table.getColumnModel().getColumn(5).setCellRenderer(
@@ -182,7 +191,7 @@ public class DashboardPanel extends JPanel {
                             JTable t, Object val, boolean sel, boolean foc, int row, int col) {
                         super.getTableCellRendererComponent(t, val, sel, foc, row, col);
                         setHorizontalAlignment(CENTER);
-                        setFont(new Font("Segoe UI", Font.BOLD, 11));
+                        setFont(new Font("Segoe UI", Font.BOLD, 12));
                         if (!sel) {
                             String s = val != null ? val.toString() : "";
                             switch (s) {
@@ -192,18 +201,19 @@ public class DashboardPanel extends JPanel {
                                 default          -> { setForeground(BLACK);               setBackground(WHITE); }
                             }
                         }
+                        setOpaque(true);
                         return this;
                     }
                 }
         );
 
         // ── Column Widths ──
-        table.getColumnModel().getColumn(0).setPreferredWidth(40);
-        table.getColumnModel().getColumn(1).setPreferredWidth(130);
-        table.getColumnModel().getColumn(2).setPreferredWidth(150);
-        table.getColumnModel().getColumn(3).setPreferredWidth(110);
-        table.getColumnModel().getColumn(4).setPreferredWidth(70);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
+        table.getColumnModel().getColumn(0).setPreferredWidth(50);
+        table.getColumnModel().getColumn(1).setPreferredWidth(150);
+        table.getColumnModel().getColumn(2).setPreferredWidth(170);
+        table.getColumnModel().getColumn(3).setPreferredWidth(120);
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);
+        table.getColumnModel().getColumn(5).setPreferredWidth(110);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createLineBorder(GRAY, 1));
@@ -247,18 +257,19 @@ public class DashboardPanel extends JPanel {
     // ── Load Recent Appointments ───────────────────
     private void loadRecentAppointments() {
         String sql = """
-             SELECT TOP 10
-                 a.id,
-                 p.name AS patient_name,
-                 d.name AS doctor_name,
-                 a.date,
-                 a.time,
-                 a.status
-             FROM appointments a
-             JOIN patients p ON a.patient_id = p.id
-             JOIN doctors d ON a.doctor_id = d.id
-             ORDER BY a.date DESC, a.time DESC
-             """;
+            SELECT TOP 10
+                a.id,
+                p.name AS patient_name,
+                d.name AS doctor_name,
+                a.date,
+                a.time,
+                a.status
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors  d ON a.doctor_id  = d.id
+            ORDER BY a.date DESC, a.time DESC
+            """;
+
         try (Connection conn = DBConnection.getConnection();
              Statement  stmt = conn.createStatement();
              ResultSet  rs   = stmt.executeQuery(sql)) {
