@@ -24,7 +24,7 @@ public class DashboardFrame extends JFrame {
     }
 
     private void setupFrame() {
-        setTitle("HealthHub Clinic — Dashboard");
+        setTitle("HealthHub Clinic");
         setSize(1200, 800); // كبرنا الحجم الافتراضي شوية عشان يكون مريح
         setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
