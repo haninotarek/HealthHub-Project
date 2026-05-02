@@ -62,14 +62,17 @@ public class DashboardPanel extends JPanel {
         JPanel rightSide = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         rightSide.setOpaque(false);
 
-        // كلمة Admin أو اسمك
-        JLabel lblAdmin = new JLabel("Admin");
+        // --- التعديل هنا: سحب اسم مستخدم اللاب تلقائياً ---
+        String pcUsername = System.getProperty("user.name");
+
+        // عرض اسم مستخدم الجهاز بدل كلمة Admin
+        JLabel lblAdmin = new JLabel(pcUsername);
         lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblAdmin.setForeground(new Color(0x333333));
 
-        // بننادي على ميثود الدائرة اللي عملناها في الخطوة الأولى
-        // تقدري تغيري "Kariman" لأي اسم تحبيه
-        JPanel profileIcon = createProfileCircle("Kariman");
+        // تمرير الاسم التلقائي لميثود الدائرة عشان تاخد أول حرف منه
+        JPanel profileIcon = createProfileCircle(pcUsername);
+        // -----------------------------------------------
 
         rightSide.add(lblAdmin);
         rightSide.add(profileIcon);
