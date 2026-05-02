@@ -4,24 +4,18 @@ import healthhub.dao.DoctorDAO;
 import healthhub.models.Doctor;
 import healthhub.utils.ColorPalette;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class DoctorPanel extends JPanel {
-    private static final Color PRIMARY    = new Color(0x11529A);
-    private static final Color PRIMARY_LT = new Color(0x296FBB);
-    private static final Color BG         = new Color(0xF4F6F8);
-    private static final Color WHITE      = Color.WHITE;
-    private static final Color GRAY       = new Color(0xC2C3C3);
-    private static final Color SUCCESS    = new Color(0x2E7D32);
-    private static final Color DANGER     = new Color(0xD32F2F);
-
     private JTable table;
     private DefaultTableModel tableModel;
     private DoctorDAO doctorDAO;
@@ -32,206 +26,123 @@ public class DoctorPanel extends JPanel {
 
     public DoctorPanel() {
         doctorDAO = new DoctorDAO();
-        setLayout(new BorderLayout(0, 16));
-        setBackground(BG);
+        setLayout(new BorderLayout(15, 15));
+        setBackground(ColorPalette.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        add(buildTopBar(), BorderLayout.NORTH);
-
-        JPanel center = new JPanel(new BorderLayout(0, 16));
-        center.setOpaque(false);
-        center.add(buildFormCard(),     BorderLayout.NORTH);
-        center.add(buildTableSection(), BorderLayout.CENTER);
-        add(center, BorderLayout.CENTER);
-
-        loadTableData();
-    }
-
-    // ── TopBar ─────────────────────────────────────
-    private JPanel buildTopBar() {
-        JPanel bar = new JPanel(new BorderLayout());
-        bar.setOpaque(false);
-        bar.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
-
-        JLabel title = new JLabel("Doctors");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        title.setForeground(PRIMARY);
-
-        bar.add(title, BorderLayout.WEST);
-        return bar;
-    }
-
-    // ── Form Card ──────────────────────────────────
-    private JPanel buildFormCard() {
-        JPanel card = new JPanel(new GridBagLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(WHITE);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
-                g2.setColor(GRAY);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
-                g2.dispose();
-            }
-        };
-        card.setOpaque(false);
-        card.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
-
+        // --- 1. فورم الإدخال (تم تعديله ليكون منظم) ---
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        inputPanel.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill    = GridBagConstraints.HORIZONTAL;
-        gbc.insets  = new Insets(6, 8, 6, 8);
-        gbc.weightx = 1.0;
+        gbc.insets = new Insets(8, 10, 8, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Title
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
-        JLabel cardTitle = new JLabel("Doctor Management");
-        cardTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        cardTitle.setForeground(PRIMARY);
-        cardTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
-        card.add(cardTitle, gbc);
-        gbc.gridwidth = 1;
+        TitledBorder border = BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(ColorPalette.PRIMARY, 1),
+                " Doctor Management ", TitledBorder.LEFT, TitledBorder.TOP,
+                new Font("Segoe UI", Font.BOLD, 14), ColorPalette.PRIMARY
+        );
+        inputPanel.setBorder(BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
 
-        // Row labels
-        gbc.gridy = 1; gbc.gridx = 0; gbc.weightx = 0.15;
-        card.add(fieldLabel("Doctor Name"), gbc);
-        gbc.gridx = 2;
-        card.add(fieldLabel("Specialization"), gbc);
-
-        // Row fields
-        gbc.gridy = 2; gbc.gridx = 0; gbc.weightx = 0.35;
         txtName = createStyledField();
-        card.add(txtName, gbc);
+        txtPhone = createStyledField();
+        txtEmail = createStyledField();
 
-        gbc.gridx = 2;
         String[] specializations = {
                 "General Medicine", "Pediatrics", "Cardiology",
                 "Dermatology", "Neurology", "Orthopedics", "Dentistry"
         };
         comboSpec = new JComboBox<>(specializations);
         styleComboBox(comboSpec);
-        card.add(comboSpec, gbc);
 
-        // Row 2 labels
-        gbc.gridy = 3; gbc.gridx = 0; gbc.weightx = 0.15;
-        card.add(fieldLabel("Phone"), gbc);
-        gbc.gridx = 2;
-        card.add(fieldLabel("Email"), gbc);
+        // إضافة العناصر بالتنسيق الجديد
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0; inputPanel.add(new JLabel("Doctor Name:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1; inputPanel.add(txtName, gbc);
 
-        // Row 2 fields
-        gbc.gridy = 4; gbc.gridx = 0; gbc.weightx = 0.35;
-        txtPhone = createStyledField();
-        card.add(txtPhone, gbc);
+        gbc.gridx = 2; gbc.weightx = 0; inputPanel.add(new JLabel("Specialization:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1; inputPanel.add(comboSpec, gbc);
 
-        gbc.gridx = 2;
-        txtEmail = createStyledField();
-        card.add(txtEmail, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0; inputPanel.add(new JLabel("Phone:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1; inputPanel.add(txtPhone, gbc);
 
-        // Buttons row
-        gbc.gridy = 5; gbc.gridx = 0; gbc.gridwidth = 4;
-        gbc.insets = new Insets(16, 8, 4, 8);
+        gbc.gridx = 2; gbc.weightx = 0; inputPanel.add(new JLabel("Email:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1; inputPanel.add(txtEmail, gbc);
 
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        btnPanel.setOpaque(false);
+        // --- 2. الزراير بألوان البيشنتس ---
+        JButton btnAdd = createStyledButton("Add Doctor", new Color(235, 255, 235), new Color(40, 167, 69)); // فاتح بحدود خضراء
+        JButton btnUpdate = createStyledButton("Update", new Color(235, 245, 255), ColorPalette.PRIMARY); // فاتح بحدود زرقاء
+        JButton btnDelete = createStyledButton("Delete", new Color(255, 235, 235), ColorPalette.DANGER); // فاتح بحدود حمراء
 
-        JButton btnAdd    = createRoundedButton("Add Doctor", SUCCESS,  true);
-        JButton btnUpdate = createRoundedButton("Update",     PRIMARY,  true);
-        JButton btnDelete = createRoundedButton("Delete",     DANGER,   true);
+        JPanel btnWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnWrapper.setBackground(ColorPalette.BACKGROUND);
+        btnWrapper.add(btnAdd); btnWrapper.add(btnUpdate); btnWrapper.add(btnDelete);
 
-        btnPanel.add(btnAdd);
-        btnPanel.add(btnUpdate);
-        btnPanel.add(btnDelete);
-        card.add(btnPanel, gbc);
-
-        // Listeners
-        btnAdd.addActionListener(e -> {
-            if (txtName.getText().trim().isEmpty()) return;
-            String spec = (String) comboSpec.getSelectedItem();
-            Doctor d = new Doctor(0, txtName.getText(), spec, txtPhone.getText(), txtEmail.getText());
-            if (doctorDAO.addDoctor(d)) { loadTableData(); clearFields(); }
-        });
-
-        btnUpdate.addActionListener(e -> {
-            if (selectedDoctorId != -1) {
-                String spec = (String) comboSpec.getSelectedItem();
-                Doctor d = new Doctor(selectedDoctorId, txtName.getText(), spec, txtPhone.getText(), txtEmail.getText());
-                if (doctorDAO.updateDoctor(d)) { loadTableData(); clearFields(); }
-            }
-        });
-
-        btnDelete.addActionListener(e -> {
-            if (selectedDoctorId != -1) {
-                if (JOptionPane.showConfirmDialog(this, "Delete?", "Confirm", 0) == 0) {
-                    if (doctorDAO.deleteDoctor(selectedDoctorId)) { loadTableData(); clearFields(); }
-                }
-            }
-        });
-
-        return card;
-    }
-
-    // ── Table Section ──────────────────────────────
-    private JPanel buildTableSection() {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 10));
-        wrapper.setOpaque(false);
-
-        // Search bar
+        // --- 3. منطقة البحث ---
         JPanel searchPanel = new JPanel(new BorderLayout(10, 0));
-        searchPanel.setOpaque(false);
+        searchPanel.setBackground(ColorPalette.BACKGROUND);
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-        JLabel lblSearch = new JLabel("Search Doctor: ");
+        JLabel lblSearch = new JLabel(" Search Doctor:");
         lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblSearch.setForeground(new Color(0x333333));
-
         txtSearch = createStyledField();
+
         searchPanel.add(lblSearch, BorderLayout.WEST);
         searchPanel.add(txtSearch, BorderLayout.CENTER);
 
-        // Table
+        // --- 4. الجدول مع التوسيط ---
         String[] columns = {"ID", "Name", "Specialization", "Phone", "Email"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override public boolean isCellEditable(int row, int col) { return false; }
         };
-
         table = new JTable(tableModel);
         rowSorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(rowSorter);
 
-        table.setRowHeight(40);
-        table.setShowGrid(false);
-        table.setShowHorizontalLines(true);
-        table.setGridColor(new Color(0xF0F0F0));
-        table.setIntercellSpacing(new Dimension(0, 0));
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setSelectionBackground(PRIMARY_LT);
-        table.setSelectionForeground(WHITE);
-        table.setBackground(WHITE);
-        table.setFillsViewportHeight(true);
-
-        JTableHeader header = table.getTableHeader();
-        header.setDefaultRenderer(new DefaultTableCellRenderer() {
+        // تنسيق الهيدر (العناوين)
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object val, boolean sel, boolean foc, int row, int col) {
-                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-                l.setBackground(WHITE);
-                l.setForeground(new Color(0x333333));
-                l.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                l.setHorizontalAlignment(LEFT);
-                l.setOpaque(true);
-                l.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(0xE5E7EB)));
-                return l;
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                label.setOpaque(true);
+                label.setBackground(ColorPalette.PRIMARY);
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                label.setHorizontalAlignment(JLabel.CENTER);
+                label.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
+                return label;
             }
         });
-        header.setBackground(WHITE);
-        header.setPreferredSize(new Dimension(0, 40));
-        header.setReorderingAllowed(false);
 
-        JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(BorderFactory.createLineBorder(GRAY, 1));
-        scroll.getViewport().setBackground(WHITE);
+        // تنسيق محتوى الجدول (التوسيط)
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
 
-        // Search Logic
+        table.setRowHeight(35);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setSelectionBackground(new Color(230, 240, 255));
+        table.setSelectionForeground(Color.BLACK);
+        table.setGridColor(new Color(230, 230, 230));
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(ColorPalette.BACKGROUND);
+        bottomPanel.add(searchPanel, BorderLayout.NORTH);
+        bottomPanel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(ColorPalette.BACKGROUND);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+        topPanel.add(btnWrapper, BorderLayout.SOUTH);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(bottomPanel, BorderLayout.CENTER);
+
+        // --- منطق البحث والـ Selection (نفسه بدون تغيير) ---
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { filterTable(); }
             @Override public void removeUpdate(DocumentEvent e) { filterTable(); }
@@ -243,99 +154,75 @@ public class DoctorPanel extends JPanel {
             }
         });
 
-        // Selection
         table.getSelectionModel().addListSelectionListener(e -> {
             int viewRow = table.getSelectedRow();
             if (viewRow != -1) {
                 int modelRow = table.convertRowIndexToModel(viewRow);
                 selectedDoctorId = (int) tableModel.getValueAt(modelRow, 0);
                 txtName.setText((String) tableModel.getValueAt(modelRow, 1));
-                String spec = (String) tableModel.getValueAt(modelRow, 2);
-                comboSpec.setSelectedItem(spec);
+                comboSpec.setSelectedItem((String) tableModel.getValueAt(modelRow, 2));
                 txtPhone.setText((String) tableModel.getValueAt(modelRow, 3));
                 txtEmail.setText((String) tableModel.getValueAt(modelRow, 4));
             }
         });
 
-        wrapper.add(searchPanel, BorderLayout.NORTH);
-        wrapper.add(scroll,      BorderLayout.CENTER);
-        return wrapper;
+        btnAdd.addActionListener(e -> {
+            if(txtName.getText().trim().isEmpty()) return;
+            Doctor d = new Doctor(0, txtName.getText(), (String) comboSpec.getSelectedItem(), txtPhone.getText(), txtEmail.getText());
+            if (doctorDAO.addDoctor(d)) { loadTableData(); clearFields(); }
+        });
+
+        btnUpdate.addActionListener(e -> {
+            if (selectedDoctorId != -1) {
+                Doctor d = new Doctor(selectedDoctorId, txtName.getText(), (String) comboSpec.getSelectedItem(), txtPhone.getText(), txtEmail.getText());
+                if (doctorDAO.updateDoctor(d)) { loadTableData(); clearFields(); }
+            }
+        });
+
+        btnDelete.addActionListener(e -> {
+            if (selectedDoctorId != -1) {
+                if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this doctor?", "Confirm Delete", JOptionPane.YES_NO_OPTION) == 0) {
+                    if (doctorDAO.deleteDoctor(selectedDoctorId)) { loadTableData(); clearFields(); }
+                }
+            }
+        });
+
+        loadTableData();
     }
 
-    // ── Helpers ────────────────────────────────────
-    private JLabel fieldLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        l.setForeground(new Color(0x444444));
-        return l;
+    private void styleComboBox(JComboBox<String> combo) {
+        combo.setBackground(Color.WHITE);
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        combo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
     }
 
     private JTextField createStyledField() {
         JTextField field = new JTextField();
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCBD5E0), 1, true),
+                BorderFactory.createLineBorder(new Color(220, 220, 220)),
                 BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-        field.setPreferredSize(new Dimension(0, 38));
         return field;
     }
 
-    private void styleComboBox(JComboBox<String> combo) {
-        combo.setBackground(WHITE);
-        combo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        combo.setPreferredSize(new Dimension(0, 38));
-    }
-
-    private JButton createRoundedButton(String text, Color color, boolean solid) {
-        final Color baseColor = color;
-        final boolean isSolid = solid;
-
+    // تعديل ميثود الزرار عشان ياخد لون الخلفية ولون النص/الحدود
+    private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(120, 38));
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
         btn.setFocusPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setOpaque(false);
+        btn.setBorder(BorderFactory.createLineBorder(fg, 1));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setPreferredSize(new Dimension(120, 35));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        if (isSolid) btn.setForeground(WHITE);
-        else         btn.setForeground(baseColor);
-
-        btn.setBorder(BorderFactory.createEmptyBorder(6, 16, 6, 16));
-
-        javax.swing.plaf.basic.BasicButtonUI ui = new javax.swing.plaf.basic.BasicButtonUI() {
-            @Override
-            public void paint(Graphics g, JComponent c) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                AbstractButton b = (AbstractButton) c;
-
-                if (isSolid) {
-                    Color fill = b.getModel().isRollover() ? baseColor.darker() : baseColor;
-                    g2.setColor(fill);
-                    g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), 10, 10);
-                } else {
-                    if (b.getModel().isRollover()) {
-                        g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 25));
-                        g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), 10, 10);
-                    } else {
-                        g2.setColor(WHITE);
-                        g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), 10, 10);
-                    }
-                    g2.setColor(baseColor);
-                    g2.setStroke(new BasicStroke(1.2f));
-                    g2.drawRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 10, 10);
-                }
-                g2.dispose();
-                super.paint(g, c);
-            }
-        };
-        btn.setUI(ui);
+        // تأثير عند مرور الماوس
+        btn.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(fg); btn.setForeground(Color.WHITE); }
+            @Override public void mouseExited(MouseEvent e) { btn.setBackground(bg); btn.setForeground(fg); }
+        });
         return btn;
     }
 
-    // ── Data ───────────────────────────────────────
     private void loadTableData() {
         tableModel.setRowCount(0);
         List<Doctor> doctors = doctorDAO.getAllDoctors();
@@ -353,4 +240,7 @@ public class DoctorPanel extends JPanel {
         selectedDoctorId = -1;
         table.clearSelection();
     }
+
+    // لإضافة MouseAdapter
+    private static class MouseAdapter extends java.awt.event.MouseAdapter {}
 }
