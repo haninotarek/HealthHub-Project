@@ -31,8 +31,8 @@ public class PatientUI extends JPanel {
         setBackground(ColorPalette.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // ================== FORM ==================
-        JPanel form = new JPanel(new GridLayout(2, 4, 15, 10));
+        // ================== FORM (FIXED) ==================
+        JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(Color.WHITE);
 
         form.setBorder(BorderFactory.createCompoundBorder(
@@ -46,16 +46,41 @@ public class PatientUI extends JPanel {
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
 
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
         txtName = createField();
         txtPhone = createField();
         txtAge = createField();
         cmbGender = new JComboBox<>(new String[]{"Male", "Female"});
         cmbGender.setBorder(BorderFactory.createLineBorder(ColorPalette.PRIMARY, 1));
 
-        form.add(new JLabel("Name:"));   form.add(txtName);
-        form.add(new JLabel("Phone:"));  form.add(txtPhone);
-        form.add(new JLabel("Age:"));    form.add(txtAge);
-        form.add(new JLabel("Gender:")); form.add(cmbGender);
+        // Row 1
+        gbc.gridx = 0; gbc.gridy = 0;
+        form.add(new JLabel("Name:"), gbc);
+
+        gbc.gridx = 1; gbc.weightx = 1;
+        form.add(txtName, gbc);
+
+        gbc.gridx = 2; gbc.weightx = 0;
+        form.add(new JLabel("Phone:"), gbc);
+
+        gbc.gridx = 3; gbc.weightx = 1;
+        form.add(txtPhone, gbc);
+
+        // Row 2
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        form.add(new JLabel("Age:"), gbc);
+
+        gbc.gridx = 1; gbc.weightx = 1;
+        form.add(txtAge, gbc);
+
+        gbc.gridx = 2; gbc.weightx = 0;
+        form.add(new JLabel("Gender:"), gbc);
+
+        gbc.gridx = 3; gbc.weightx = 1;
+        form.add(cmbGender, gbc);
 
         // ================== BUTTONS ==================
         JButton btnAdd = createButton("Add Patient", ColorPalette.SUCCESS);
@@ -233,7 +258,6 @@ public class PatientUI extends JPanel {
         loadData();
     }
 
-    // ================== HELPERS ==================
     private JTextField createField() {
         JTextField f = new JTextField();
         f.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -247,8 +271,23 @@ public class PatientUI extends JPanel {
 
     private JButton createButton(String text, Color color) {
         JButton b = new JButton(text);
-        b.setBackground(color);
-        b.setForeground(Color.WHITE);
+
+        Color bg;
+        Color fg;
+
+        if (color.equals(ColorPalette.SUCCESS)) {
+            bg = new Color(220, 248, 230);
+            fg = new Color(40, 167, 69);
+        } else if (color.equals(ColorPalette.PRIMARY)) {
+            bg = new Color(220, 235, 255);
+            fg = new Color(13, 110, 253);
+        } else {
+            bg = new Color(255, 230, 230);
+            fg = new Color(220, 53, 69);
+        }
+
+        b.setBackground(bg);
+        b.setForeground(fg);
         b.setFocusPainted(false);
         b.setBorderPainted(false);
         b.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -257,10 +296,10 @@ public class PatientUI extends JPanel {
 
         b.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                b.setBackground(color.darker());
+                b.setBackground(bg.darker());
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                b.setBackground(color);
+                b.setBackground(bg);
             }
         });
 
