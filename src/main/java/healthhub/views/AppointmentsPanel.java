@@ -1,9 +1,11 @@
 package healthhub.views;
 
 import healthhub.dao.AppointmentDAO;
+import healthhub.dao.DoctorDAO;
+import healthhub.dao.PatientDAO;
 import healthhub.models.Appointment;
-
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
@@ -12,22 +14,23 @@ import java.time.LocalTime;
 import java.util.List;
 
 public class AppointmentsPanel extends JPanel {
+    private static final Color PRIMARY = new Color(0x11529A);
+    private static final Color BG = new Color(0xFAFAFA);
+    private static final Color WHITE = Color.WHITE;
 
-    // ── Color Palette ──────────────────────────────
-    private static final Color PRIMARY    = new Color(0x11529A);
-    private static final Color PRIMARY_LT = new Color(0x296FBB);
-    private static final Color BG         = new Color(0xFAFAFA);
-    private static final Color BLACK      = new Color(0x000000);
-    private static final Color GRAY       = new Color(0xC2C3C3);
-    private static final Color WHITE      = Color.WHITE;
-    // ───────────────────────────────────────────────
+    // ألوان الـ Status Badge
+    private static final Color STATUS_BG = new Color(0xE8F5E9);
+    private static final Color STATUS_TEXT = new Color(0x2E7D32);
 
     private JTable table;
     private DefaultTableModel tableModel;
     private JComboBox<String> patientCombo, doctorCombo, timeCombo;
     private JTextField dateField, notesField;
     private JButton saveButton;
+
     private AppointmentDAO appointmentDAO = new AppointmentDAO();
+    private DoctorDAO doctorDAO = new DoctorDAO();
+    private PatientDAO patientDAO = new PatientDAO();
 
     public AppointmentsPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -35,311 +38,246 @@ public class AppointmentsPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         add(buildHeader(), BorderLayout.NORTH);
-
         JPanel center = new JPanel(new BorderLayout(0, 16));
         center.setBackground(BG);
-        center.add(buildForm(),  BorderLayout.NORTH);
-        center.add(buildTable(), BorderLayout.CENTER);
-
+        center.add(buildForm(), BorderLayout.NORTH);
+        center.add(buildTableSection(), BorderLayout.CENTER);
         add(center, BorderLayout.CENTER);
+
+        loadComboBoxData();
     }
 
-    // ── Header ─────────────────────────────────────
     private JPanel buildHeader() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(BG);
-        p.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-
-        JLabel title = new JLabel("Appointments");
+        JLabel title = new JLabel("Appointments Management");
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setForeground(PRIMARY);
         p.add(title, BorderLayout.WEST);
         return p;
     }
 
-    // ── Form ───────────────────────────────────────
     private JPanel buildForm() {
         JPanel card = new JPanel(new GridBagLayout());
         card.setBackground(WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(GRAY, 1, true),
-                BorderFactory.createEmptyBorder(16, 20, 20, 20)
+                BorderFactory.createLineBorder(new Color(0xC2C3C3), 1, true),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
-
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1.0;
 
-        // Card Title
-        gbc.gridx = 0; gbc.gridy = 0;
-        gbc.gridwidth = 6; gbc.weightx = 1.0;
-        JLabel cardTitle = new JLabel("Book New Appointment");
-        cardTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        cardTitle.setForeground(PRIMARY);
-        cardTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
-        card.add(cardTitle, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; card.add(new JLabel("Patient:"), gbc);
+        gbc.gridx = 1; patientCombo = new JComboBox<>(); card.add(patientCombo, gbc);
+        gbc.gridx = 2; card.add(new JLabel("Doctor:"), gbc);
+        gbc.gridx = 3; doctorCombo = new JComboBox<>(); card.add(doctorCombo, gbc);
 
-        // Separator
-        gbc.gridy = 1;
-        JSeparator sep = new JSeparator();
-        sep.setForeground(GRAY);
-        card.add(sep, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; card.add(new JLabel("Date:"), gbc);
+        gbc.gridx = 1; dateField = new JTextField(LocalDate.now().toString()); card.add(dateField, gbc);
+        gbc.gridx = 2; card.add(new JLabel("Time:"), gbc);
+        gbc.gridx = 3;
+        String[] hours = {"09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"};
+        timeCombo = new JComboBox<>(hours); card.add(timeCombo, gbc);
 
-        // Row 2: Patient + Doctor
-        gbc.gridwidth = 1; gbc.weightx = 0;
-        gbc.gridx = 0; gbc.gridy = 2;
-        card.add(makeLabel("Patient:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 2; card.add(new JLabel("Notes:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2; notesField = new JTextField(); card.add(notesField, gbc);
 
-        gbc.gridx = 1; gbc.weightx = 0.4; gbc.gridwidth = 2;
-        patientCombo = new JComboBox<>(new String[]{
-                "1 - Mohamed Ali", "2 - Sara Khaled", "3 - Omar Youssef"
-        });
-        styleCombo(patientCombo);
-        card.add(patientCombo, gbc);
-
-        gbc.gridx = 3; gbc.weightx = 0; gbc.gridwidth = 1;
-        card.add(makeLabel("Doctor:"), gbc);
-
-        gbc.gridx = 4; gbc.weightx = 0.4; gbc.gridwidth = 2;
-        doctorCombo = new JComboBox<>(new String[]{
-                "1 - Dr. Ahmed Hassan", "2 - Dr. Mona Salem", "3 - Dr. Karim Nabil"
-        });
-        styleCombo(doctorCombo);
-        card.add(doctorCombo, gbc);
-
-        // Row 3: Date + Time + Notes
-        gbc.gridwidth = 1; gbc.weightx = 0;
-        gbc.gridx = 0; gbc.gridy = 3;
-        card.add(makeLabel("Date:"), gbc);
-
-        gbc.gridx = 1; gbc.weightx = 0.2; gbc.gridwidth = 1;
-        dateField = new JTextField("2026-04-30");
-        styleField(dateField);
-        card.add(dateField, gbc);
-
-        gbc.gridx = 2; gbc.weightx = 0; gbc.gridwidth = 1;
-        card.add(makeLabel("Time:"), gbc);
-
-        gbc.gridx = 3; gbc.weightx = 0.15; gbc.gridwidth = 1;
-        timeCombo = new JComboBox<>(new String[]{
-                "09:00","09:30","10:00","10:30","11:00","11:30",
-                "12:00","12:30","13:00","13:30","14:00","14:30",
-                "15:00","15:30","16:00","16:30","17:00","17:30"
-        });
-        styleCombo(timeCombo);
-        card.add(timeCombo, gbc);
-
-        gbc.gridx = 4; gbc.weightx = 0; gbc.gridwidth = 1;
-        card.add(makeLabel("Notes:"), gbc);
-
-        gbc.gridx = 5; gbc.weightx = 0.25; gbc.gridwidth = 1;
-        notesField = new JTextField();
-        styleField(notesField);
-        card.add(notesField, gbc);
-
-        // Row 4: Save Button
-        gbc.gridx = 0; gbc.gridy = 4;
-        gbc.gridwidth = 6; gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(14, 6, 4, 6);
-
+        gbc.gridx = 3; gbc.gridwidth = 1;
         saveButton = new JButton("Save Appointment");
-        saveButton.setPreferredSize(new Dimension(200, 40));
         saveButton.setBackground(PRIMARY);
         saveButton.setForeground(WHITE);
         saveButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
         saveButton.setOpaque(true);
-        saveButton.setContentAreaFilled(true);
         saveButton.setBorderPainted(false);
-        saveButton.setFocusPainted(false);
+        saveButton.setPreferredSize(new Dimension(150, 40));
         saveButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        saveButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                saveButton.setBackground(PRIMARY_LT);
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                saveButton.setBackground(PRIMARY);
-            }
-        });
         saveButton.addActionListener(e -> saveAppointment());
         card.add(saveButton, gbc);
-
         return card;
     }
 
-    // ── Table ──────────────────────────────────────
-    private JPanel buildTable() {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 8));
+    private JPanel buildTableSection() {
+        JPanel wrapper = new JPanel(new BorderLayout(0, 10));
         wrapper.setBackground(BG);
 
-        JLabel tableTitle = new JLabel("All Appointments");
-        tableTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        tableTitle.setForeground(PRIMARY);
-        tableTitle.setBorder(BorderFactory.createEmptyBorder(4, 2, 6, 0));
-        wrapper.add(tableTitle, BorderLayout.NORTH);
-
-        String[] columns = {"#", "Patient", "Doctor", "Date", "Time", "Status"};
+        String[] columns = {"#", "Patient Name", "Doctor ID", "Date", "Time", "Status", "Notes"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        table = new JTable(tableModel) {
-            @Override
-            public Component prepareRenderer(javax.swing.table.TableCellRenderer r, int row, int col) {
-                Component c = super.prepareRenderer(r, row, col);
-                if (isRowSelected(row)) {
-                    c.setBackground(PRIMARY_LT);
-                    c.setForeground(WHITE);
-                } else if (col != 5) {
-                    // الـ Status column بيتحكم فيه الـ custom renderer
-                    c.setBackground(row % 2 == 0 ? WHITE : BG);
-                    c.setForeground(BLACK);
-                }
-                return c;
-            }
-        };
+        table = new JTable(tableModel);
+        table.setRowHeight(40);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
-        table.setRowHeight(34);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        table.setShowGrid(true);
-        table.setGridColor(new Color(0xE8E8E8));
-        table.setIntercellSpacing(new Dimension(1, 1));
-        table.setSelectionBackground(PRIMARY_LT);
-        table.setSelectionForeground(WHITE);
-        table.setFillsViewportHeight(true);
-        table.setBackground(WHITE);
-
-        // ── Header ──
         JTableHeader header = table.getTableHeader();
-        header.setDefaultRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setBackground(WHITE);
+        header.setPreferredSize(new Dimension(0, 40));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xEEEEEE)));
+
+        // إصلاح تلوين الـ Status عند التحديد (Selection Fix)
+        table.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object val, boolean sel, boolean foc, int row, int col) {
-                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-                l.setBackground(PRIMARY);
-                l.setForeground(WHITE);
-                l.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                l.setHorizontalAlignment(CENTER);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                l.setHorizontalAlignment(SwingConstants.CENTER);
+
+                if (isSelected) {
+                    // لو محددة الصف، ياخد لون التحديد الأزرق العادي
+                    l.setBackground(table.getSelectionBackground());
+                    l.setForeground(table.getSelectionForeground());
+                } else {
+                    // لو مش محددة، يظهر اللون الأخضر
+                    if ("Scheduled".equals(value)) {
+                        l.setBackground(STATUS_BG);
+                        l.setForeground(STATUS_TEXT);
+                    } else {
+                        l.setBackground(WHITE);
+                        l.setForeground(Color.BLACK);
+                    }
+                }
                 l.setOpaque(true);
-                l.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, PRIMARY_LT));
                 return l;
             }
         });
-        header.setBackground(PRIMARY);
-        header.setPreferredSize(new Dimension(0, 38));
-        header.setReorderingAllowed(false);
-
-        // ── Status Renderer ──
-        table.getColumnModel().getColumn(5).setCellRenderer(
-                new javax.swing.table.DefaultTableCellRenderer() {
-                    @Override
-                    public Component getTableCellRendererComponent(
-                            JTable t, Object val, boolean sel, boolean foc, int row, int col) {
-                        super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-                        setHorizontalAlignment(CENTER);
-                        setFont(new Font("Segoe UI", Font.BOLD, 11));
-                        if (!sel) {
-                            String s = val != null ? val.toString() : "";
-                            switch (s) {
-                                case "Scheduled" -> { setForeground(PRIMARY);              setBackground(new Color(0xE3EDF8)); }
-                                case "Completed" -> { setForeground(new Color(0x2E7D32)); setBackground(new Color(0xE8F5E9)); }
-                                case "Cancelled" -> { setForeground(new Color(0xC62828)); setBackground(new Color(0xFFEBEE)); }
-                                default          -> { setForeground(BLACK);               setBackground(WHITE); }
-                            }
-                        }
-                        return this;
-                    }
-                }
-        );
-
-        // ── Column Widths ──
-        table.getColumnModel().getColumn(0).setPreferredWidth(50);
-        table.getColumnModel().getColumn(1).setPreferredWidth(130);
-        table.getColumnModel().getColumn(2).setPreferredWidth(150);
-        table.getColumnModel().getColumn(3).setPreferredWidth(120);
-        table.getColumnModel().getColumn(4).setPreferredWidth(80);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
-
-        loadData();
 
         JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(BorderFactory.createLineBorder(GRAY, 1));
-        scroll.getViewport().setBackground(BG);
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
+        scroll.getViewport().setBackground(WHITE);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        btnPanel.setBackground(BG);
+
+        JButton editBtn = new JButton("Edit");
+        styleButton(editBtn, new Color(0x11529A), false);
+        editBtn.addActionListener(e -> prepareEdit()); // تشغيل زرار الـ Edit
+
+        JButton deleteBtn = new JButton("Delete");
+        styleButton(deleteBtn, new Color(0xD32F2F), true);
+        deleteBtn.addActionListener(e -> deleteAppointment());
+
+        btnPanel.add(editBtn);
+        btnPanel.add(deleteBtn);
 
         wrapper.add(scroll, BorderLayout.CENTER);
+        wrapper.add(btnPanel, BorderLayout.SOUTH);
+
+        loadData();
         return wrapper;
     }
 
-    // ── Helpers ────────────────────────────────────
-    private JLabel makeLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        l.setForeground(BLACK);
-        return l;
+    private void styleButton(JButton btn, Color color, boolean solid) {
+        btn.setPreferredSize(new Dimension(100, 32));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setFocusPainted(false);
+        if (solid) {
+            btn.setBackground(color);
+            btn.setForeground(WHITE);
+            btn.setBorderPainted(false);
+            btn.setOpaque(true);
+        } else {
+            btn.setBackground(WHITE);
+            btn.setForeground(color);
+            btn.setBorder(BorderFactory.createLineBorder(color));
+            btn.setContentAreaFilled(false);
+        }
     }
 
-    private void styleField(JTextField f) {
-        f.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(GRAY, 1, true),
-                BorderFactory.createEmptyBorder(4, 8, 4, 8)
-        ));
-        f.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        f.setBackground(WHITE);
-        f.setForeground(BLACK);
+    private void loadComboBoxData() {
+        patientCombo.removeAllItems();
+        patientDAO.getAllPatients().forEach(p -> patientCombo.addItem(p.getId() + " - " + p.getName()));
+        doctorCombo.removeAllItems();
+        doctorDAO.getAllDoctors().forEach(d -> doctorCombo.addItem(d.getId() + " - " + d.getName()));
     }
 
-    private void styleCombo(JComboBox<String> c) {
-        c.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        c.setBackground(WHITE);
-        c.setForeground(BLACK);
-    }
-
-    // ── Data ───────────────────────────────────────
     private void loadData() {
         tableModel.setRowCount(0);
         List<Appointment> list = appointmentDAO.getAll();
         for (Appointment a : list) {
+            String pName = patientDAO.getPatientById(a.getPatientId()).getName();
             tableModel.addRow(new Object[]{
-                    a.getId(), a.getPatientId(), a.getDoctorId(),
-                    a.getDate(), a.getTime(), a.getStatus()
+                    a.getId(), pName, a.getDoctorId(), a.getDate(), a.getTime(), a.getStatus(), a.getNotes()
             });
         }
     }
 
-    private void saveAppointment() {
-        String dateStr = dateField.getText().trim();
-        String timeStr = (String) timeCombo.getSelectedItem();
-        String notes   = notesField.getText().trim();
-
-        if (dateStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a date.", "Error", JOptionPane.WARNING_MESSAGE);
+    // دالة لتجهيز البيانات للتعديل
+    private void prepareEdit() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to edit!");
             return;
         }
 
+        String patientName = tableModel.getValueAt(row, 1).toString();
+        String doctorId = tableModel.getValueAt(row, 2).toString();
+        String date = tableModel.getValueAt(row, 3).toString();
+        String time = tableModel.getValueAt(row, 4).toString();
+        String notes = tableModel.getValueAt(row, 6).toString();
+
+        // ضبط الـ Patient Combo
+        for (int i = 0; i < patientCombo.getItemCount(); i++) {
+            if (patientCombo.getItemAt(i).contains(patientName)) {
+                patientCombo.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        // ضبط الـ Doctor Combo
+        for (int i = 0; i < doctorCombo.getItemCount(); i++) {
+            if (doctorCombo.getItemAt(i).startsWith(doctorId + " -")) {
+                doctorCombo.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        dateField.setText(date);
+        timeCombo.setSelectedItem(time);
+        notesField.setText(notes);
+
+        JOptionPane.showMessageDialog(this, "Data loaded into the form. Modify and click Save.");
+    }
+
+    private void saveAppointment() {
         try {
-            LocalDate appointmentDate = LocalDate.parse(dateStr);
-            LocalTime appointmentTime = LocalTime.parse(timeStr);
+            int pId = Integer.parseInt(patientCombo.getSelectedItem().toString().split(" - ")[0]);
+            int dId = Integer.parseInt(doctorCombo.getSelectedItem().toString().split(" - ")[0]);
+            LocalDate d = LocalDate.parse(dateField.getText());
+            LocalTime t = LocalTime.parse(timeCombo.getSelectedItem().toString());
 
-            int patientId = Integer.parseInt(patientCombo.getSelectedItem().toString().split(" - ")[0]);
-            int doctorId  = Integer.parseInt(doctorCombo.getSelectedItem().toString().split(" - ")[0]);
-
-            if (appointmentDAO.hasConflict(doctorId, dateStr, timeStr)) {
-                JOptionPane.showMessageDialog(this, "Doctor already booked!", "Conflict Error", JOptionPane.ERROR_MESSAGE);
+            if (appointmentDAO.hasConflict(dId, d, t)) {
+                JOptionPane.showMessageDialog(this, "Conflict: Doctor is busy!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            Appointment a = new Appointment(0, patientId, doctorId,
-                    appointmentDate, appointmentTime, "Scheduled", notes);
-
-            if (appointmentDAO.add(a)) {
-                JOptionPane.showMessageDialog(this, "Saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            if (appointmentDAO.add(new healthhub.models.Appointment(0, pId, dId, d, t, "Scheduled", notesField.getText()))) {
+                JOptionPane.showMessageDialog(this, "Saved Successfully!");
                 loadData();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to save.", "Error", JOptionPane.ERROR_MESSAGE);
+                notesField.setText("");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid date/time format!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error: Check date format!");
+        }
+    }
+
+    private void deleteAppointment() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to delete!");
+            return;
+        }
+        int id = (int) tableModel.getValueAt(row, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this?");
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (appointmentDAO.delete(id)) {
+                JOptionPane.showMessageDialog(this, "Deleted!");
+                loadData();
+            }
         }
     }
 }

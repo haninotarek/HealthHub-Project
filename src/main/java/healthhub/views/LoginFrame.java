@@ -29,6 +29,8 @@ public class LoginFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
+        // تم إضافة السطر ده عشان يضمن إنها تفتح مكبرة لو اللي قبلها كانت مكبرة
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     private void initComponents() {
@@ -51,7 +53,7 @@ public class LoginFrame extends JFrame {
 
         panel.add(Box.createVerticalGlue());
 
-        // ===== صورة اللوجو =====
+        // ===== صورة اللوجو (رجعت زي ما كانت) =====
         JLabel iconLabel = new JLabel();
         java.net.URL logoURL = getClass().getResource("/images/logo.png");
         if (logoURL != null) {
@@ -62,7 +64,7 @@ public class LoginFrame extends JFrame {
         iconLabel.setPreferredSize(new Dimension(150, 150));
         iconLabel.setMaximumSize(new Dimension(150, 150));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // =======================
+        // =========================================
 
         JLabel nameLabel = new JLabel("HealthHub Clinic");
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -189,8 +191,11 @@ public class LoginFrame extends JFrame {
         User user = userDAO.login(username, password);
 
         if (user != null) {
-            dispose();
-            new DashboardFrame(user).setVisible(true);
+            DashboardFrame dashboard = new DashboardFrame(user);
+            // التعديل: نقل حالة التكبير للداشبورد عشان ميكشش ويصغر
+            dashboard.setExtendedState(this.getExtendedState());
+            dashboard.setVisible(true);
+            this.dispose();
         } else {
             showError("Invalid username or password");
             passwordField.setText("");
@@ -199,13 +204,6 @@ public class LoginFrame extends JFrame {
 
     private void showError(String message) {
         errorLabel.setText(message);
-    }
-
-    private void openDashboard() {
-        JOptionPane.showMessageDialog(this,
-                "Login successful! Dashboard coming next!",
-                "HealthHub",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private JButton createStyledButton(String text) {

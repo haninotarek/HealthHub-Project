@@ -8,6 +8,26 @@ import java.util.List;
 
 public class DoctorDAO {
 
+    // ── 1. دالة التأكد من وجود الجدول (أضيفيها هنا) ──
+    public void createTableIfNotExists() {
+        String sql = "CREATE TABLE IF NOT EXISTS doctors (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "name VARCHAR(100) NOT NULL," +
+                "specialization VARCHAR(100)," +
+                "phone VARCHAR(20)," +
+                "email VARCHAR(100)" +
+                ")";
+
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            System.out.println("[DoctorDAO] Table is ready.");
+        } catch (SQLException e) {
+            System.err.println("[DoctorDAO] Error creating table: " + e.getMessage());
+        }
+    }
+
+    // ── 2. دالة الإضافة ──
     public boolean addDoctor(Doctor doctor) {
         String sql = "INSERT INTO doctors (name, specialization, phone, email) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
@@ -23,6 +43,7 @@ public class DoctorDAO {
         }
     }
 
+    // ── 3. دالة جلب كل البيانات ──
     public List<Doctor> getAllDoctors() {
         List<Doctor> doctors = new ArrayList<>();
         String sql = "SELECT * FROM doctors";
@@ -43,7 +64,8 @@ public class DoctorDAO {
         }
         return doctors;
     }
-    // دالة الحذف
+
+    // ── 4. دالة الحذف ──
     public boolean deleteDoctor(int id) {
         String sql = "DELETE FROM doctors WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -56,7 +78,7 @@ public class DoctorDAO {
         }
     }
 
-    // دالة التعديل
+    // ── 5. دالة التعديل ──
     public boolean updateDoctor(Doctor doctor) {
         String sql = "UPDATE doctors SET name=?, specialization=?, phone=?, email=? WHERE id=?";
         try (Connection conn = DBConnection.getConnection();

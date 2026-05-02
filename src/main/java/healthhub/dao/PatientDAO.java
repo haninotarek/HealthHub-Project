@@ -174,4 +174,28 @@ public class PatientDAO {
 
         return 0;
     }
+    public Patient getPatientById(int id) {
+        String sql = "SELECT * FROM patients WHERE id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // التعديل هنا: بنبعت البيانات بالترتيب اللي الـ Constructor محتاجه
+                    // (id, name, phone, age, gender)
+                    return new Patient(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("phone"),
+                            rs.getInt("age"),
+                            rs.getString("gender")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("getPatientById error: " + e.getMessage());
+        }
+        return null;
+    }
 }

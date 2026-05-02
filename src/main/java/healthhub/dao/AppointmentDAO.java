@@ -2,27 +2,26 @@ package healthhub.dao;
 
 import healthhub.models.Appointment;
 import healthhub.utils.DBConnection;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 public class AppointmentDAO {
 
-    // ── جيب كل الـ Appointments ──
     public List<Appointment> getAll() {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT * FROM appointments";
+        // التعديل هنا: عملنا JOIN عشان نجيب الأسامي من الجداول التانية
+        String sql = "SELECT a.*, p.name AS patient_name, d.name AS doctor_name " +
+                "FROM appointments a " +
+                "JOIN patients p ON a.patient_id = p.id " +
+                "JOIN doctors d ON a.doctor_id = d.id";
 
-        try {
-            Connection con = DBConnection.getConnection();
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
+        try (Connection con = DBConnection.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
-                list.add(new Appointment(
+                Appointment app = new Appointment(
                         rs.getInt("id"),
                         rs.getInt("patient_id"),
                         rs.getInt("doctor_id"),
@@ -30,86 +29,58 @@ public class AppointmentDAO {
                         rs.getObject("time", java.time.LocalTime.class),
                         rs.getString("status"),
                         rs.getString("notes")
-                ));
+                );
+                // بنستخدم الـ notes مؤقتاً عشان نخزن أسامي العرض لو محتاجين،
+                // بس إحنا هنعرض الأسامي مباشرة في الـ Panel
+                list.add(app);
             }
         } catch (SQLException e) {
-            System.out.println("getAll error: " + e.getMessage());
+            System.err.println("getAll error: " + e.getMessage());
         }
         return list;
     }
 
-    // ── أضف Appointment جديد ──
     public boolean add(Appointment a) {
-        String sql = "INSERT INTO appointments (patient_id, doctor_id, date, time, status, notes) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
-
-        try {
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
+        String sql = "INSERT INTO appointments (patient_id, doctor_id, date, time, status, notes) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, a.getPatientId());
             ps.setInt(2, a.getDoctorId());
             ps.setObject(3, a.getDate());
             ps.setObject(4, a.getTime());
             ps.setString(5, a.getStatus());
             ps.setString(6, a.getNotes());
-            ps.executeUpdate();
-            return true;
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("add error: " + e.getMessage());
+            System.err.println("add error: " + e.getMessage());
             return false;
         }
     }
 
-    // ── احذف Appointment ──
-    public boolean delete(int id) {
-        String sql = "DELETE FROM appointments WHERE id = ?";
-
-        try {
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1, id);
-            ps.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            System.out.println("delete error: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // ── Conflict Check: هل الدكتور متحجوزه في نفس الوقت؟ ──
-    public boolean hasConflict(int doctorId, String date, String time) {
-        String sql = "SELECT COUNT(*) FROM appointments " +
-                "WHERE doctor_id = ? AND date = ? AND time = ? AND status = 'Scheduled'";
-
-        try {
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
+    public boolean hasConflict(int doctorId, java.time.LocalDate date, java.time.LocalTime time) {
+        String sql = "SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND date = ? AND CONVERT(varchar(5), time, 108) = ? AND status = 'Scheduled'";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
-            ps.setString(2, date);
-            ps.setString(3, time);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
+            ps.setDate(2, java.sql.Date.valueOf(date));
+            ps.setString(3, time.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.out.println("conflict check error: " + e.getMessage());
+            System.err.println("Conflict Check Error: " + e.getMessage());
         }
         return false;
     }
 
-    // ── غير Status ──
-    public boolean updateStatus(int id, String status) {
-        String sql = "UPDATE appointments SET status = ? WHERE id = ?";
-
-        try {
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, status);
-            ps.setInt(2, id);
-            ps.executeUpdate();
-            return true;
+    public boolean delete(int id) {
+        String sql = "DELETE FROM appointments WHERE id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("updateStatus error: " + e.getMessage());
+            System.err.println("delete error: " + e.getMessage());
             return false;
         }
     }

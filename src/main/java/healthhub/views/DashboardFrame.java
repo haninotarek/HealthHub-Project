@@ -25,12 +25,15 @@ public class DashboardFrame extends JFrame {
 
     private void setupFrame() {
         setTitle("HealthHub Clinic — Dashboard");
-        setSize(1000, 700);
-        setMinimumSize(new Dimension(850, 550));
+        setSize(1200, 800); // كبرنا الحجم الافتراضي شوية عشان يكون مريح
+        setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
         setLayout(new BorderLayout());
+
+        // *** أهم سطر: يخلي الشاشة تفتح مالي الشاشة من الأول ويحافظ على الوضع ده ***
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     private void buildUI() {
@@ -94,15 +97,14 @@ public class DashboardFrame extends JFrame {
         JButton btn = new JButton(text) {
             @Override
             protected void paintComponent(Graphics g) {
-                if (isOpaque()) {
-                    g.setColor(getBackground());
+                if (isSelected() || getModel().isArmed()) {
+                    g.setColor(new Color(255, 255, 255, 30));
                     g.fillRect(0, 0, getWidth(), getHeight());
                 }
                 super.paintComponent(g);
             }
         };
 
-        // --- التعديل الذكي لمنع رسائل الخطأ في الكونسول ---
         try {
             if (iconName != null && !iconName.isEmpty()) {
                 java.net.URL imgURL = getClass().getResource("/images/" + iconName);
@@ -110,19 +112,14 @@ public class DashboardFrame extends JFrame {
                     ImageIcon originalIcon = new ImageIcon(imgURL);
                     Image img = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
                     btn.setIcon(new ImageIcon(img));
-                } else {
-                    System.err.println("❌ Image not found: /images/" + iconName);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // ------------------------------------------------
+        } catch (Exception e) {}
 
         btn.setFont(FONT_NAV);
         btn.setForeground(new Color(255, 255, 255, 180));
         btn.setBackground(ColorPalette.PRIMARY);
-        btn.setOpaque(true);
+        btn.setOpaque(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
@@ -134,14 +131,10 @@ public class DashboardFrame extends JFrame {
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(new Color(255, 255, 255, 30));
                 btn.setForeground(Color.WHITE);
-                btn.repaint();
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(ColorPalette.PRIMARY);
                 btn.setForeground(new Color(255, 255, 255, 180));
-                btn.repaint();
             }
         });
 
@@ -154,7 +147,6 @@ public class DashboardFrame extends JFrame {
         bottom.setBackground(ColorPalette.PRIMARY);
         bottom.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
 
-        // هنا بعتنا null عشان مفيش أيقونة حالياً والكونسول ميزعلش
         JButton btnLogout = buildNavButton("Logout", null, () -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
@@ -174,10 +166,16 @@ public class DashboardFrame extends JFrame {
         return contentArea;
     }
 
+    // *** الميثود المعدلة لمنع اهتزاز أو تصغير الشاشة ***
     public void showPanel(JPanel panel) {
         contentArea.removeAll();
         contentArea.add(panel, BorderLayout.CENTER);
-        contentArea.revalidate();
+
+        // نستخدم validate بدلاً من revalidate في بعض الحالات لضمان استقرار الـ Layout
+        contentArea.validate();
         contentArea.repaint();
+
+        // نأكد على الـ Frame إنه يحافظ على حجمه الحالي
+        this.getContentPane().validate();
     }
 }
