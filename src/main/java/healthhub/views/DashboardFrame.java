@@ -59,7 +59,7 @@ public class DashboardFrame extends JFrame {
         top.setBackground(ColorPalette.PRIMARY);
         top.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
 
-        JLabel lblName = new JLabel("HEALTH HUB");
+        JLabel lblName = new JLabel("HealthHub");
         lblName.setFont(FONT_LOGO);
         lblName.setForeground(Color.WHITE);
 

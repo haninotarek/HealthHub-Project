@@ -69,7 +69,7 @@ public class DoctorPanel extends JPanel {
         searchPanel.setBackground(ColorPalette.BACKGROUND);
         searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-        JLabel lblSearch = new JLabel("🔍 Search Doctor:");
+        JLabel lblSearch = new JLabel(" Search Doctor:");
         lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 13));
         txtSearch = createStyledField();
 

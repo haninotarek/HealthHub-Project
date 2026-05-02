@@ -12,14 +12,12 @@ import java.sql.*;
 
 public class DashboardPanel extends JPanel {
 
-    // ── Color Palette ──────────────────────────────
     private static final Color PRIMARY    = new Color(0x11529A);
     private static final Color PRIMARY_LT = new Color(0x296FBB);
     private static final Color BG         = new Color(0xFAFAFA);
     private static final Color BLACK      = new Color(0x000000);
     private static final Color GRAY       = new Color(0xC2C3C3);
     private static final Color WHITE      = Color.WHITE;
-    // ───────────────────────────────────────────────
 
     private static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,  13);
     private static final Font FONT_VALUE  = new Font("Segoe UI", Font.BOLD,  28);
@@ -48,7 +46,6 @@ public class DashboardPanel extends JPanel {
         loadRecentAppointments();
     }
 
-    // ── TopBar ─────────────────────────────────────
     private JPanel buildTopBar() {
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setOpaque(false);
@@ -58,7 +55,7 @@ public class DashboardPanel extends JPanel {
         lblPage.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblPage.setForeground(PRIMARY);
 
-        JLabel lblAdmin = new JLabel("  👤 Admin  ");
+        JLabel lblAdmin = new JLabel("  \uD83D\uDC64 Admin  ");
         lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblAdmin.setForeground(WHITE);
         lblAdmin.setBackground(PRIMARY);
@@ -71,7 +68,6 @@ public class DashboardPanel extends JPanel {
         return topBar;
     }
 
-    // ── Main Content ───────────────────────────────
     private JPanel buildMainContent() {
         JPanel content = new JPanel(new BorderLayout(0, 16));
         content.setOpaque(false);
@@ -80,7 +76,6 @@ public class DashboardPanel extends JPanel {
         return content;
     }
 
-    // ── Stats Row ──────────────────────────────────
     private JPanel buildStatsRow() {
         JPanel row = new JPanel(new GridLayout(1, 4, 12, 0));
         row.setOpaque(false);
@@ -94,14 +89,21 @@ public class DashboardPanel extends JPanel {
         return row;
     }
 
-    // ── Stat Card ──────────────────────────────────
     private JPanel buildStatCard(String title, JLabel valueLabel) {
-        JPanel card = new JPanel(new BorderLayout(0, 6));
-        card.setBackground(WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(GRAY, 1, true),
-                BorderFactory.createEmptyBorder(14, 16, 14, 16)
-        ));
+        JPanel card = new JPanel(new BorderLayout(0, 8)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+                g2.setColor(GRAY);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
+        card.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
 
         JLabel lblTitle = new JLabel(title);
         lblTitle.setFont(FONT_TITLE);
@@ -116,19 +118,16 @@ public class DashboardPanel extends JPanel {
         return card;
     }
 
-    // ── Table Card ─────────────────────────────────
     private JPanel buildTableCard() {
         JPanel card = new JPanel(new BorderLayout(0, 8));
         card.setBackground(BG);
 
-        // Title
         JLabel lblTitle = new JLabel("Recent Appointments");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblTitle.setForeground(PRIMARY);
         lblTitle.setBorder(BorderFactory.createEmptyBorder(4, 2, 6, 0));
         card.add(lblTitle, BorderLayout.NORTH);
 
-        // Table
         table = new JTable(tableModel) {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer r, int row, int col) {
@@ -154,7 +153,6 @@ public class DashboardPanel extends JPanel {
         table.setFillsViewportHeight(true);
         table.setBackground(WHITE);
 
-        // ── Header ──
         JTableHeader header = table.getTableHeader();
         header.setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
@@ -174,7 +172,6 @@ public class DashboardPanel extends JPanel {
         header.setPreferredSize(new Dimension(0, 38));
         header.setReorderingAllowed(false);
 
-        // ── Status Renderer ──
         table.getColumnModel().getColumn(5).setCellRenderer(
                 new DefaultTableCellRenderer() {
                     @Override
@@ -197,7 +194,6 @@ public class DashboardPanel extends JPanel {
                 }
         );
 
-        // ── Column Widths ──
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(130);
         table.getColumnModel().getColumn(2).setPreferredWidth(150);
@@ -213,7 +209,6 @@ public class DashboardPanel extends JPanel {
         return card;
     }
 
-    // ── Table Model ────────────────────────────────
     private DefaultTableModel createTableModel() {
         String[] columns = {"#", "Patient", "Doctor", "Date", "Time", "Status"};
         return new DefaultTableModel(columns, 0) {
@@ -221,7 +216,6 @@ public class DashboardPanel extends JPanel {
         };
     }
 
-    // ── Load Stats ─────────────────────────────────
     private void loadStats() {
         try (Connection conn = DBConnection.getConnection()) {
             lblPatients.setText(queryCount(conn,
@@ -244,21 +238,21 @@ public class DashboardPanel extends JPanel {
         }
     }
 
-    // ── Load Recent Appointments ───────────────────
     private void loadRecentAppointments() {
         String sql = """
-             SELECT TOP 10
-                 a.id,
-                 p.name AS patient_name,
-                 d.name AS doctor_name,
-                 a.date,
-                 a.time,
-                 a.status
-             FROM appointments a
-             JOIN patients p ON a.patient_id = p.id
-             JOIN doctors d ON a.doctor_id = d.id
-             ORDER BY a.date DESC, a.time DESC
-             """;
+            SELECT TOP 10
+                a.id,
+                p.name AS patient_name,
+                d.name AS doctor_name,
+                a.date,
+                a.time,
+                a.status
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors  d ON a.doctor_id  = d.id
+            ORDER BY a.date DESC, a.time DESC
+            """;
+
         try (Connection conn = DBConnection.getConnection();
              Statement  stmt = conn.createStatement();
              ResultSet  rs   = stmt.executeQuery(sql)) {

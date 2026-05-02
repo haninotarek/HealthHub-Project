@@ -79,17 +79,17 @@ public class MainFrame extends JFrame {
         panel.add(Box.createVerticalGlue());
 
         JLabel welcomeLabel = new JLabel("Welcome");
-        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 38));
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD,55));
         welcomeLabel.setForeground(ColorPalette.TEXT_DARK);
         welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel sloganLabel = new JLabel("Your health, our priority");
-        sloganLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        sloganLabel.setFont(new Font("Segoe UI", Font.PLAIN, 24));
         sloganLabel.setForeground(ColorPalette.TEXT_MEDIUM);
         sloganLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel descLabel = new JLabel("<html><p style='width:280px;'>Manage your clinic with ease...</p></html>");
-        descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         descLabel.setForeground(ColorPalette.TEXT_MEDIUM);
         descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -141,6 +141,7 @@ public class MainFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
+        SwingUtilities.invokeLater(() ->
+                new MainFrame().setVisible(true));
     }
 }
