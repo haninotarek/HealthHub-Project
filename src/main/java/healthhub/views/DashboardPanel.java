@@ -95,7 +95,8 @@ public class DashboardPanel extends JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(WHITE);
+                // تأثير تغيير اللون عند مرور الماوس
+                g2.setColor(getBackground());
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
                 g2.setColor(GRAY);
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
@@ -103,7 +104,9 @@ public class DashboardPanel extends JPanel {
             }
         };
         card.setOpaque(false);
+        card.setBackground(WHITE); // اللون الافتراضي
         card.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR)); // تغيير شكل الماوس ليد
 
         JLabel lblTitle = new JLabel(title);
         lblTitle.setFont(FONT_TITLE);
@@ -115,9 +118,36 @@ public class DashboardPanel extends JPanel {
         card.add(lblTitle,   BorderLayout.NORTH);
         card.add(valueLabel, BorderLayout.CENTER);
 
+        // إضافة التفاعل (الضغط والمرور)
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                card.setBackground(new Color(245, 248, 255)); // لون خفيف عند المرور
+                card.repaint();
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                card.setBackground(WHITE); // العودة للأبيض
+                card.repaint();
+            }
+
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                // البحث عن الـ Frame الأساسي لتبديل الصفحة
+                Window ancestor = SwingUtilities.getWindowAncestor(card);
+                if (ancestor instanceof DashboardFrame) {
+                    DashboardFrame frame = (DashboardFrame) ancestor;
+                    if (title.contains("Patients")) frame.showPanel(new PatientUI());
+                    else if (title.contains("Doctors")) frame.showPanel(new DoctorPanel());
+                    else if (title.contains("Appointments")) frame.showPanel(new AppointmentsPanel());
+                    else if (title.contains("Scheduled")) frame.showPanel(new AppointmentsPanel());
+                }
+            }
+        });
+
         return card;
     }
-
     private JPanel buildTableCard() {
         JPanel card = new JPanel(new BorderLayout(0, 8));
         card.setBackground(BG);

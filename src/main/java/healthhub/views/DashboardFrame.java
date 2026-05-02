@@ -166,16 +166,35 @@ public class DashboardFrame extends JFrame {
         return contentArea;
     }
 
-    // *** الميثود المعدلة لمنع اهتزاز أو تصغير الشاشة ***
+    // *** الميثود المعدلة لإضافة تأثير الظهور الناعم (Fade-In Animation) ***
     public void showPanel(JPanel panel) {
         contentArea.removeAll();
+
+        // نجعل اللوحة الجديدة شفافة في البداية (إذا كانت تدعم ذلك)
+        panel.setOpaque(false);
         contentArea.add(panel, BorderLayout.CENTER);
 
-        // نستخدم validate بدلاً من revalidate في بعض الحالات لضمان استقرار الـ Layout
+        // تأثير الأنيميشن باستخدام Timer
+        final float[] alpha = {0f}; // البداية شفاف تماماً
+        Timer timer = new Timer(15, e -> {
+            alpha[0] += 0.1f; // زيادة الشفافية تدريجياً
+            if (alpha[0] >= 1.0f) {
+                alpha[0] = 1.0f;
+                ((Timer)e.getSource()).stop(); // إيقاف الأنيميشن عند الوصول للوضوح الكامل
+            }
+            // تطبيق الشفافية على الـ background
+            panel.setBackground(new Color(
+                    ColorPalette.BACKGROUND.getRed(),
+                    ColorPalette.BACKGROUND.getGreen(),
+                    ColorPalette.BACKGROUND.getBlue(),
+                    (int)(alpha[0] * 255)
+            ));
+            contentArea.revalidate();
+            contentArea.repaint();
+        });
+
+        timer.start();
         contentArea.validate();
         contentArea.repaint();
-
-        // نأكد على الـ Frame إنه يحافظ على حجمه الحالي
-        this.getContentPane().validate();
     }
 }
