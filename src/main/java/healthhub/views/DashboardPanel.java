@@ -9,6 +9,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.sql.*;
+import java.awt.geom.*; // مهمة للرسم
+import java.awt.RenderingHints;
 
 public class DashboardPanel extends JPanel {
 
@@ -51,23 +53,32 @@ public class DashboardPanel extends JPanel {
         topBar.setOpaque(false);
         topBar.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
+        // كلمة Dashboard اللي على الشمال
         JLabel lblPage = new JLabel("Dashboard");
         lblPage.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblPage.setForeground(PRIMARY);
 
-        JLabel lblAdmin = new JLabel("  \uD83D\uDC64 Admin  ");
-        lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblAdmin.setForeground(WHITE);
-        lblAdmin.setBackground(PRIMARY);
-        lblAdmin.setOpaque(true);
-        lblAdmin.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        // الجزء اللي على اليمين (الاسم والدائرة)
+        JPanel rightSide = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        rightSide.setOpaque(false);
+
+        // كلمة Admin أو اسمك
+        JLabel lblAdmin = new JLabel("Admin");
+        lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblAdmin.setForeground(new Color(0x333333));
+
+        // بننادي على ميثود الدائرة اللي عملناها في الخطوة الأولى
+        // تقدري تغيري "Kariman" لأي اسم تحبيه
+        JPanel profileIcon = createProfileCircle("Kariman");
+
+        rightSide.add(lblAdmin);
+        rightSide.add(profileIcon);
 
         topBar.add(lblPage,  BorderLayout.WEST);
-        topBar.add(lblAdmin, BorderLayout.EAST);
+        topBar.add(rightSide, BorderLayout.EAST);
 
         return topBar;
     }
-
     private JPanel buildMainContent() {
         JPanel content = new JPanel(new BorderLayout(0, 16));
         content.setOpaque(false);
@@ -302,5 +313,40 @@ public class DashboardPanel extends JPanel {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    // ميثود مسؤولة عن رسم دائرة البروفايل
+    private JPanel createProfileCircle(String name) {
+        // بناخد أول حرف من الاسم ونخليه Capital
+        String initial = (name != null && !name.isEmpty()) ? name.substring(0, 1).toUpperCase() : "A";
+
+        JPanel circle = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                // تفعيل تنعيم الحواف عشان الدائرة تطلع مظبوطة مش مشرشرة
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 1. رسم الدائرة (باللون الأزرق الفاتح بتاعك)
+                g2.setColor(new Color(0x296FBB));
+                g2.fillOval(0, 0, 35, 35);
+
+                // 2. تنسيق الخط ولونه (أبيض)
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+                // 3. حسابات حسابية عشان الحرف يجي في نص الدائرة بالظبط
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (35 - fm.stringWidth(initial)) / 2;
+                int y = ((35 - fm.getHeight()) / 2) + fm.getAscent();
+
+                g2.drawString(initial, x, y);
+                g2.dispose();
+            }
+        };
+
+        circle.setPreferredSize(new Dimension(35, 35));
+        circle.setOpaque(false); // عشان الخلفية اللي ورا الدائرة متبانش مربعة
+        return circle;
     }
 }
