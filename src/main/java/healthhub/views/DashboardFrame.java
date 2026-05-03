@@ -197,4 +197,13 @@ public class DashboardFrame extends JFrame {
         contentArea.validate();
         contentArea.repaint();
     }
+    // حطيها بعد ميثود showPanel مباشرةً
+    public void navigateTo(String panelKey) {
+        switch (panelKey) {
+            case "patients":     showPanel(new PatientUI());          break;
+            case "doctors":      showPanel(new DoctorPanel());        break;
+            case "appointments": showPanel(new AppointmentsPanel());  break;
+            case "dashboard":    showPanel(new DashboardPanel(this)); break;
+        }
+    }
 }

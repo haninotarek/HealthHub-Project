@@ -9,8 +9,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.sql.*;
-import java.awt.geom.*; // مهمة للرسم
 import java.awt.RenderingHints;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class DashboardPanel extends JPanel {
 
@@ -34,7 +35,15 @@ public class DashboardPanel extends JPanel {
     private final DefaultTableModel tableModel;
     private JTable table;
 
+    private final JFrame parentFrame;
+
     public DashboardPanel() {
+        this(null);
+    }
+
+    public DashboardPanel(JFrame parentFrame) {
+        this.parentFrame = parentFrame;
+
         setLayout(new BorderLayout(0, 20));
         setBackground(BG);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -53,40 +62,38 @@ public class DashboardPanel extends JPanel {
         topBar.setOpaque(false);
         topBar.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-        // كلمة Dashboard اللي على الشمال
         JLabel lblPage = new JLabel("Dashboard");
         lblPage.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblPage.setForeground(PRIMARY);
 
-        // الجزء اللي على اليمين (الاسم والدائرة)
         JPanel rightSide = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         rightSide.setOpaque(false);
 
-        // --- التعديل هنا: سحب اسم مستخدم اللاب تلقائياً ---
         String pcUsername = System.getProperty("user.name");
-
-        // عرض اسم مستخدم الجهاز بدل كلمة Admin
         JLabel lblAdmin = new JLabel(pcUsername);
         lblAdmin.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblAdmin.setForeground(new Color(0x333333));
 
-        // تمرير الاسم التلقائي لميثود الدائرة عشان تاخد أول حرف منه
-        JPanel profileIcon = createProfileCircle(pcUsername);
-        // -----------------------------------------------
-
         rightSide.add(lblAdmin);
-        rightSide.add(profileIcon);
+        rightSide.add(createProfileCircle(pcUsername));
 
-        topBar.add(lblPage,  BorderLayout.WEST);
+        topBar.add(lblPage,   BorderLayout.WEST);
         topBar.add(rightSide, BorderLayout.EAST);
 
         return topBar;
     }
+
     private JPanel buildMainContent() {
         JPanel content = new JPanel(new BorderLayout(0, 16));
         content.setOpaque(false);
-        content.add(buildStatsRow(),  BorderLayout.NORTH);
-        content.add(buildTableCard(), BorderLayout.CENTER);
+        content.add(buildStatsRow(), BorderLayout.NORTH);
+
+        JPanel bottomSection = new JPanel(new GridLayout(1, 2, 20, 0));
+        bottomSection.setOpaque(false);
+        bottomSection.add(buildTableCard());
+        bottomSection.add(buildChartCard());
+
+        content.add(bottomSection, BorderLayout.CENTER);
         return content;
     }
 
@@ -95,21 +102,20 @@ public class DashboardPanel extends JPanel {
         row.setOpaque(false);
         row.setPreferredSize(new Dimension(0, 100));
 
-        row.add(buildStatCard("Total Patients",  lblPatients));
-        row.add(buildStatCard("Total Doctors",   lblDoctors));
-        row.add(buildStatCard("Appointments",    lblAppointments));
-        row.add(buildStatCard("Scheduled",       lblScheduled));
+        row.add(buildStatCard("Total Patients",  lblPatients,     "patients"));
+        row.add(buildStatCard("Total Doctors",   lblDoctors,      "doctors"));
+        row.add(buildStatCard("Appointments",    lblAppointments, "appointments"));
+        row.add(buildStatCard("Scheduled",       lblScheduled,    "appointments"));
 
         return row;
     }
 
-    private JPanel buildStatCard(String title, JLabel valueLabel) {
+    private JPanel buildStatCard(String title, JLabel valueLabel, String targetPanel) {
         JPanel card = new JPanel(new BorderLayout(0, 8)) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // تأثير تغيير اللون عند مرور الماوس
                 g2.setColor(getBackground());
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
                 g2.setColor(GRAY);
@@ -118,9 +124,9 @@ public class DashboardPanel extends JPanel {
             }
         };
         card.setOpaque(false);
-        card.setBackground(WHITE); // اللون الافتراضي
+        card.setBackground(WHITE);
         card.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
-        card.setCursor(new Cursor(Cursor.HAND_CURSOR)); // تغيير شكل الماوس ليد
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         JLabel lblTitle = new JLabel(title);
         lblTitle.setFont(FONT_TITLE);
@@ -132,45 +138,60 @@ public class DashboardPanel extends JPanel {
         card.add(lblTitle,   BorderLayout.NORTH);
         card.add(valueLabel, BorderLayout.CENTER);
 
-        // إضافة التفاعل (الضغط والمرور)
         card.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                card.setBackground(new Color(245, 248, 255)); // لون خفيف عند المرور
+                card.setBackground(new Color(245, 248, 255));
                 card.repaint();
             }
-
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                card.setBackground(WHITE); // العودة للأبيض
+                card.setBackground(WHITE);
                 card.repaint();
             }
-
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                // البحث عن الـ Frame الأساسي لتبديل الصفحة
-                Window ancestor = SwingUtilities.getWindowAncestor(card);
-                if (ancestor instanceof DashboardFrame) {
-                    DashboardFrame frame = (DashboardFrame) ancestor;
-                    if (title.contains("Patients")) frame.showPanel(new PatientUI());
-                    else if (title.contains("Doctors")) frame.showPanel(new DoctorPanel());
-                    else if (title.contains("Appointments")) frame.showPanel(new AppointmentsPanel());
-                    else if (title.contains("Scheduled")) frame.showPanel(new AppointmentsPanel());
-                }
+                navigateTo(targetPanel);
             }
         });
 
         return card;
     }
+
+    // ── التغيير الجوهري: MainFrame → DashboardFrame في 3 أماكن ──
+    private void navigateTo(String panelKey) {
+        // طريقة 1: parentFrame
+        if (parentFrame instanceof DashboardFrame) {
+            ((DashboardFrame) parentFrame).navigateTo(panelKey);
+            return;
+        }
+        // طريقة 2: نتسلق الـ hierarchy
+        Container parent = getParent();
+        while (parent != null) {
+            if (parent instanceof DashboardFrame) {
+                ((DashboardFrame) parent).navigateTo(panelKey);
+                return;
+            }
+            parent = parent.getParent();
+        }
+        // طريقة 3: fallback
+        for (Window w : Window.getWindows()) {
+            if (w instanceof DashboardFrame) {
+                ((DashboardFrame) w).navigateTo(panelKey);
+                return;
+            }
+        }
+    }
+
     private JPanel buildTableCard() {
-        JPanel card = new JPanel(new BorderLayout(0, 8));
-        card.setBackground(BG);
+        JPanel container = new JPanel(new BorderLayout(0, 8));
+        container.setOpaque(false);
 
         JLabel lblTitle = new JLabel("Recent Appointments");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblTitle.setForeground(PRIMARY);
         lblTitle.setBorder(BorderFactory.createEmptyBorder(4, 2, 6, 0));
-        card.add(lblTitle, BorderLayout.NORTH);
+        container.add(lblTitle, BorderLayout.NORTH);
 
         table = new JTable(tableModel) {
             @Override
@@ -179,7 +200,7 @@ public class DashboardPanel extends JPanel {
                 if (isRowSelected(row)) {
                     c.setBackground(PRIMARY_LT);
                     c.setForeground(WHITE);
-                } else if (col != 5) {
+                } else {
                     c.setBackground(row % 2 == 0 ? WHITE : BG);
                     c.setForeground(BLACK);
                 }
@@ -191,17 +212,13 @@ public class DashboardPanel extends JPanel {
         table.setRowHeight(34);
         table.setShowGrid(true);
         table.setGridColor(new Color(0xE8E8E8));
-        table.setIntercellSpacing(new Dimension(1, 1));
         table.setSelectionBackground(PRIMARY_LT);
         table.setSelectionForeground(WHITE);
-        table.setFillsViewportHeight(true);
-        table.setBackground(WHITE);
 
         JTableHeader header = table.getTableHeader();
         header.setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object val, boolean sel, boolean foc, int row, int col) {
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int row, int col) {
                 JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, sel, foc, row, col);
                 l.setBackground(PRIMARY);
                 l.setForeground(WHITE);
@@ -212,45 +229,121 @@ public class DashboardPanel extends JPanel {
                 return l;
             }
         });
-        header.setBackground(PRIMARY);
         header.setPreferredSize(new Dimension(0, 38));
-        header.setReorderingAllowed(false);
-
-        table.getColumnModel().getColumn(5).setCellRenderer(
-                new DefaultTableCellRenderer() {
-                    @Override
-                    public Component getTableCellRendererComponent(
-                            JTable t, Object val, boolean sel, boolean foc, int row, int col) {
-                        super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-                        setHorizontalAlignment(CENTER);
-                        setFont(new Font("Segoe UI", Font.BOLD, 11));
-                        if (!sel) {
-                            String s = val != null ? val.toString() : "";
-                            switch (s) {
-                                case "Scheduled" -> { setForeground(PRIMARY);              setBackground(new Color(0xE3EDF8)); }
-                                case "Completed" -> { setForeground(new Color(0x2E7D32)); setBackground(new Color(0xE8F5E9)); }
-                                case "Cancelled" -> { setForeground(new Color(0xC62828)); setBackground(new Color(0xFFEBEE)); }
-                                default          -> { setForeground(BLACK);               setBackground(WHITE); }
-                            }
-                        }
-                        return this;
-                    }
-                }
-        );
-
-        table.getColumnModel().getColumn(0).setPreferredWidth(40);
-        table.getColumnModel().getColumn(1).setPreferredWidth(130);
-        table.getColumnModel().getColumn(2).setPreferredWidth(150);
-        table.getColumnModel().getColumn(3).setPreferredWidth(110);
-        table.getColumnModel().getColumn(4).setPreferredWidth(70);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createLineBorder(GRAY, 1));
-        scroll.getViewport().setBackground(BG);
+        scroll.getViewport().setBackground(WHITE);
+        container.add(scroll, BorderLayout.CENTER);
 
-        card.add(scroll, BorderLayout.CENTER);
-        return card;
+        return container;
+    }
+
+    private JPanel buildChartCard() {
+        JPanel container = new JPanel(new BorderLayout(0, 8));
+        container.setOpaque(false);
+
+        JLabel lblTitle = new JLabel("Appointment Distribution");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTitle.setForeground(PRIMARY);
+        lblTitle.setBorder(BorderFactory.createEmptyBorder(4, 2, 6, 0));
+        container.add(lblTitle, BorderLayout.NORTH);
+
+        JPanel chartWrapper = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+                g2.setColor(GRAY);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
+                g2.dispose();
+            }
+        };
+        chartWrapper.setOpaque(false);
+        chartWrapper.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        chartWrapper.add(createSimpleBarChart(), BorderLayout.CENTER);
+
+        container.add(chartWrapper, BorderLayout.CENTER);
+        return container;
+    }
+
+    private JPanel createSimpleBarChart() {
+        return new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                Map<String, Integer> chartData = getChartData();
+                if (chartData.isEmpty()) {
+                    g2.setColor(new Color(0xADADB2));
+                    g2.drawString("No Data Available", 20, 30);
+                    return;
+                }
+
+                int barWidth        = 42;
+                int gap             = 35;
+                int x               = 40;
+                int chartAreaHeight = getHeight() - 60;
+                int maxVal = chartData.values().stream().max(Integer::compare).orElse(1);
+
+                Color[] colors = {
+                        new Color(0x0984E3),
+                        new Color(0x00B894),
+                        new Color(0xFDCB6E),
+                        new Color(0x6C5CE7),
+                        new Color(0xE17055)
+                };
+
+                int i = 0;
+                for (Map.Entry<String, Integer> entry : chartData.entrySet()) {
+                    String label = entry.getKey();
+                    int value    = entry.getValue();
+
+                    int barHeight = (value * chartAreaHeight) / maxVal;
+                    if (barHeight < 5 && value > 0) barHeight = 5;
+
+                    g2.setColor(new Color(242, 242, 242));
+                    g2.fillRoundRect(x, 15, barWidth, chartAreaHeight, 10, 10);
+
+                    g2.setColor(colors[i % colors.length]);
+                    g2.fillRoundRect(x, 15 + (chartAreaHeight - barHeight), barWidth, barHeight, 10, 10);
+
+                    g2.setColor(new Color(0x2D3436));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                    String displayLabel = label.length() > 9 ? label.substring(0, 8) + "." : label;
+
+                    FontMetrics fm = g2.getFontMetrics();
+                    int labelX = x + (barWidth / 2) - (fm.stringWidth(displayLabel) / 2);
+                    g2.drawString(displayLabel, labelX, getHeight() - 10);
+
+                    x += barWidth + gap;
+                    i++;
+                    if (i >= 5) break;
+                }
+                g2.dispose();
+            }
+        };
+    }
+
+    private Map<String, Integer> getChartData() {
+        Map<String, Integer> data = new LinkedHashMap<>();
+        String sql = "SELECT d.specialization, COUNT(a.id) as total " +
+                "FROM doctors d " +
+                "LEFT JOIN appointments a ON d.id = a.doctor_id " +
+                "GROUP BY d.specialization";
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt  = conn.createStatement();
+             ResultSet rs    = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                String spec = rs.getString("specialization");
+                if (spec != null) data.put(spec, rs.getInt("total"));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return data;
     }
 
     private DefaultTableModel createTableModel() {
@@ -262,94 +355,60 @@ public class DashboardPanel extends JPanel {
 
     private void loadStats() {
         try (Connection conn = DBConnection.getConnection()) {
-            lblPatients.setText(queryCount(conn,
-                    "SELECT COUNT(*) FROM patients"));
-            lblDoctors.setText(queryCount(conn,
-                    "SELECT COUNT(*) FROM doctors"));
-            lblAppointments.setText(queryCount(conn,
-                    "SELECT COUNT(*) FROM appointments"));
-            lblScheduled.setText(queryCount(conn,
-                    "SELECT COUNT(*) FROM appointments WHERE status = 'Scheduled'"));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            lblPatients.setText(queryCount(conn, "SELECT COUNT(*) FROM patients"));
+            lblDoctors.setText(queryCount(conn, "SELECT COUNT(*) FROM doctors"));
+            lblAppointments.setText(queryCount(conn, "SELECT COUNT(*) FROM appointments"));
+            lblScheduled.setText(queryCount(conn, "SELECT COUNT(*) FROM appointments WHERE status = 'Scheduled'"));
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     private String queryCount(Connection conn, String sql) throws SQLException {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs   = stmt.executeQuery(sql)) {
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             return rs.next() ? String.valueOf(rs.getInt(1)) : "0";
         }
     }
 
     private void loadRecentAppointments() {
-        String sql = """
-            SELECT TOP 10
-                a.id,
-                p.name AS patient_name,
-                d.name AS doctor_name,
-                a.date,
-                a.time,
-                a.status
-            FROM appointments a
-            JOIN patients p ON a.patient_id = p.id
-            JOIN doctors  d ON a.doctor_id  = d.id
-            ORDER BY a.date DESC, a.time DESC
-            """;
-
+        String sql = "SELECT TOP 10 a.id, p.name AS p_name, d.name AS d_name, a.date, a.time, a.status " +
+                "FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id " +
+                "ORDER BY a.date DESC, a.time DESC";
         try (Connection conn = DBConnection.getConnection();
-             Statement  stmt = conn.createStatement();
-             ResultSet  rs   = stmt.executeQuery(sql)) {
-
+             Statement stmt  = conn.createStatement();
+             ResultSet rs    = stmt.executeQuery(sql)) {
             tableModel.setRowCount(0);
             int row = 1;
             while (rs.next()) {
                 tableModel.addRow(new Object[]{
                         row++,
-                        rs.getString("patient_name"),
-                        rs.getString("doctor_name"),
+                        rs.getString("p_name"),
+                        rs.getString("d_name"),
                         rs.getString("date"),
                         rs.getTime("time").toString().substring(0, 5),
                         rs.getString("status")
                 });
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
-    // ميثود مسؤولة عن رسم دائرة البروفايل
-    private JPanel createProfileCircle(String name) {
-        // بناخد أول حرف من الاسم ونخليه Capital
-        String initial = (name != null && !name.isEmpty()) ? name.substring(0, 1).toUpperCase() : "A";
 
+    private JPanel createProfileCircle(String name) {
+        String initial = (name != null && !name.isEmpty()) ? name.substring(0, 1).toUpperCase() : "A";
         JPanel circle = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                // تفعيل تنعيم الحواف عشان الدائرة تطلع مظبوطة مش مشرشرة
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // 1. رسم الدائرة (باللون الأزرق الفاتح بتاعك)
-                g2.setColor(new Color(0x296FBB));
+                g2.setColor(PRIMARY_LT);
                 g2.fillOval(0, 0, 35, 35);
-
-                // 2. تنسيق الخط ولونه (أبيض)
-                g2.setColor(Color.WHITE);
+                g2.setColor(WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
-
-                // 3. حسابات حسابية عشان الحرف يجي في نص الدائرة بالظبط
                 FontMetrics fm = g2.getFontMetrics();
-                int x = (35 - fm.stringWidth(initial)) / 2;
-                int y = ((35 - fm.getHeight()) / 2) + fm.getAscent();
-
-                g2.drawString(initial, x, y);
+                g2.drawString(initial, (35 - fm.stringWidth(initial)) / 2, ((35 - fm.getHeight()) / 2) + fm.getAscent());
                 g2.dispose();
             }
         };
-
         circle.setPreferredSize(new Dimension(35, 35));
-        circle.setOpaque(false); // عشان الخلفية اللي ورا الدائرة متبانش مربعة
+        circle.setOpaque(false);
         return circle;
     }
 }
