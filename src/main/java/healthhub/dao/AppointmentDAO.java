@@ -58,8 +58,10 @@ public class AppointmentDAO {
     }
 
     public boolean hasConflict(int doctorId, java.time.LocalDate date, java.time.LocalTime time) {
-        String sql = "SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND date = ? AND CONVERT(varchar(5), time, 108) = ? AND status = 'Scheduled'";
-        try (Connection con = DBConnection.getConnection();
+        // المقارنة بتتم عن طريق تحويل الوقت لنص HH:mm عشان SQL Server يقارن الساعة بدقة
+        String sql = "SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND date = ? " +
+                "AND LEFT(CONVERT(varchar, time, 108), 5) = ? AND status = 'Scheduled'";
+        try (Connection con = healthhub.utils.DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
             ps.setDate(2, java.sql.Date.valueOf(date));
@@ -72,7 +74,6 @@ public class AppointmentDAO {
         }
         return false;
     }
-
     public boolean delete(int id) {
         String sql = "DELETE FROM appointments WHERE id = ?";
         try (Connection con = DBConnection.getConnection();
