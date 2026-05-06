@@ -3,7 +3,7 @@ package healthhub.views;
 import healthhub.dao.PatientDAO;
 import healthhub.models.Patient;
 import healthhub.utils.ColorPalette;
-
+// استخدمت swing , awt ,table ,event
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -13,43 +13,43 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class PatientUI extends JPanel {
+public class PatientUI extends JPanel { //1. use container كلاس بيورث من panel
 
-    private JTable table;
-    private DefaultTableModel tableModel;
-    private PatientDAO patientDAO;
+    private JTable table; // عرض البيانات في (شكل)table
+    private DefaultTableModel tableModel; //يخزن البيانات
+    private PatientDAO patientDAO; // object from class PatientDAO
 
-    private JTextField txtName, txtPhone, txtAge, txtSearch;
-    private JComboBox<String> cmbGender;
+    private JTextField txtName, txtPhone, txtAge, txtSearch; //components (text field)
+    private JComboBox<String> cmbGender; //(Dropdown)
 
-    private int selectedPatientId = -1;
-    private TableRowSorter<DefaultTableModel> rowSorter;
+    private int selectedPatientId = -1; // id بيخزن المريض
+    private TableRowSorter<DefaultTableModel> rowSorter; //object مسؤل عن الترتيب في الجدول
 
-    public PatientUI() {
-        patientDAO = new PatientDAO();
+    public PatientUI() { // constructor
+        patientDAO = new PatientDAO(); // object from database
 
-        setLayout(new BorderLayout(0, 16));
-        setBackground(ColorPalette.BACKGROUND); // استخدام Palette الموحدة
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setLayout(new BorderLayout(0, 16)); // قسمت بيها الشاشه
+        setBackground(ColorPalette.BACKGROUND); // استخدام Palette الموحدة وتحدد لون الخلفيه
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // add padding
 
-        // العنوان العلوي
+        // العنوان العلوي ب اسنخدام component (label)
         JLabel title = new JLabel("Patients");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        title.setForeground(ColorPalette.PRIMARY);
-        add(title, BorderLayout.NORTH);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22)); // شكل ونوع الخط
+        title.setForeground(ColorPalette.PRIMARY); // لون الخط بنحدد
+        add(title, BorderLayout.NORTH); // اعلي الشاشه
 
         JPanel center = new JPanel(new BorderLayout(0, 16));
-        center.setOpaque(false);
+        center.setOpaque(false); // الخلفيه شفافه
         center.add(buildFormCard(),     BorderLayout.NORTH);
         center.add(buildTableSection(), BorderLayout.CENTER);
         add(center, BorderLayout.CENTER);
 
-        loadData();
+        loadData(); // بتجيب البيانات من الداتا تحطها في الجدول
     }
 
     // ── Form Card (نفس شكل الدكاترة المنظم) ────────────────
     private JPanel buildFormCard() {
-        JPanel card = new JPanel(new GridBagLayout()) {
+        JPanel card = new JPanel(new GridBagLayout()) { // بتسمح بتحديد كل عنصر بدقه
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -58,20 +58,20 @@ public class PatientUI extends JPanel {
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
                 g2.setColor(new Color(220, 220, 220));
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
-                g2.dispose();
+                g2.dispose();// نقفل الرسم وننضف الموارد
             }
         };
         card.setOpaque(false);
         card.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill    = GridBagConstraints.HORIZONTAL;
+        gbc.fill    = GridBagConstraints.HORIZONTAL; //عناصر تتمدد افقي
         gbc.insets  = new Insets(6, 8, 6, 8);
         gbc.weightx = 1.0;
 
         // Title
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
-        JLabel cardTitle = new JLabel("Patient Management");
+        JLabel cardTitle = new JLabel("Patient Management"); //label
         cardTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
         cardTitle.setForeground(ColorPalette.PRIMARY);
         cardTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
@@ -98,14 +98,14 @@ public class PatientUI extends JPanel {
         styleComboBox(cmbGender);
         card.add(cmbGender, gbc);
 
-        // Buttons (ألوان الدكاترة الجديدة)
+        // Buttons (ألوان الجديدة)
         gbc.gridy = 5; gbc.gridx = 0; gbc.gridwidth = 4;
         gbc.insets = new Insets(16, 8, 4, 8);
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         btnPanel.setOpaque(false);
 
-        // تطبيق نفس ألوان الدكاترة هنا
+        // تطبيق نفس الالوان  هنا
         JButton btnAdd    = createStyledButton("Add Patient", new Color(235, 255, 235), new Color(40, 167, 69));
         JButton btnUpdate = createStyledButton("Update",      new Color(235, 245, 255), ColorPalette.PRIMARY);
         JButton btnDelete = createStyledButton("Delete",      new Color(255, 235, 235), ColorPalette.DANGER);
@@ -115,8 +115,8 @@ public class PatientUI extends JPanel {
         btnPanel.add(btnDelete);
         card.add(btnPanel, gbc);
 
-        // Listeners
-        btnAdd.addActionListener(e -> {
+        // Listeners (add,update,delete)
+        btnAdd.addActionListener(e -> { // event
             if (txtName.getText().trim().isEmpty()) return;
             try {
                 Patient p = new Patient(0, txtName.getText(), txtPhone.getText(),
@@ -131,7 +131,7 @@ public class PatientUI extends JPanel {
                     Patient p = new Patient(selectedPatientId, txtName.getText(), txtPhone.getText(),
                             Integer.parseInt(txtAge.getText()), cmbGender.getSelectedItem().toString());
                     if (patientDAO.updatePatient(p)) { loadData(); clear(); }
-                } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Invalid data"); }
+                } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Invalid data"); } // لو في خطا
             }
         });
 
@@ -147,7 +147,7 @@ public class PatientUI extends JPanel {
         return card;
     }
 
-    // ── Table Section (أزرق ومتسنتر زي الدكاترة) ───────────
+    // ── Table Section (أزرق ومتسنتر ) ───────────
     private JPanel buildTableSection() {
         JPanel wrapper = new JPanel(new BorderLayout(0, 10));
         wrapper.setOpaque(false);
@@ -198,8 +198,8 @@ public class PatientUI extends JPanel {
         rowSorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(rowSorter);
 
-        JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
+        JScrollPane scroll = new JScrollPane(table); // بنحط الجدول داخل scroll عشان لو البيانات كتير
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1)); //حدود حولين الجدول
 
         // Search Logic
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
@@ -209,11 +209,11 @@ public class PatientUI extends JPanel {
             private void filter() {
                 String text = txtSearch.getText();
                 if (text.isEmpty()) rowSorter.setRowFilter(null);
-                else rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1));
+                else rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1)); // A=a
             }
         });
 
-        // Selection Logic
+        // Selection Logic اختيار صف من الجدول
         table.getSelectionModel().addListSelectionListener(e -> {
             int viewRow = table.getSelectedRow();
             if (viewRow != -1) {
@@ -232,7 +232,7 @@ public class PatientUI extends JPanel {
     }
 
     // ── Helpers ────────────────────────────────────
-    private JTextField createField() {
+    private JTextField createField() { // داله بتعمل تيكست فيلد جاهز
         JTextField f = new JTextField();
         f.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         f.setBorder(BorderFactory.createCompoundBorder(
@@ -259,8 +259,8 @@ public class PatientUI extends JPanel {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         btn.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(fg); btn.setForeground(Color.WHITE); }
-            @Override public void mouseExited(MouseEvent e) { btn.setBackground(bg); btn.setForeground(fg); }
+            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(fg); btn.setForeground(Color.WHITE); } //يغير لون
+            @Override public void mouseExited(MouseEvent e) { btn.setBackground(bg); btn.setForeground(fg); } //يرجع لون
         });
         return btn;
     }
@@ -269,7 +269,7 @@ public class PatientUI extends JPanel {
         tableModel.setRowCount(0);
         List<Patient> list = patientDAO.getAllPatients();
         for (Patient p : list) {
-            tableModel.addRow(new Object[]{p.getId(), p.getName(), p.getPhone(), p.getAge(), p.getGender()});
+            tableModel.addRow(new Object[]{p.getId(), p.getName(), p.getPhone(), p.getAge(), p.getGender()}); // مسح البيانات القديمه
         }
     }
 

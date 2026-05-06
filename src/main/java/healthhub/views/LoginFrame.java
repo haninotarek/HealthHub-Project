@@ -13,10 +13,11 @@ import healthhub.dao.UserDAO;
 import healthhub.models.User;
 
 public class LoginFrame extends JFrame {
-
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JLabel errorLabel;
+    //  ليه عرفناهم private فوق وليه مش local؟
+    //عشان نقدر نوصلهم من أكتر من ميثود
+    private JTextField usernameField;   // الخانة اللي هيكتب فيها اليوزر اسم المستخدم
+    private JPasswordField passwordField;  // خانة الباسورد
+    private JLabel errorLabel;             //  label اللي هيظهر فيه رسالة الخطأ
 
     public LoginFrame() {
         initFrame();
@@ -29,7 +30,7 @@ public class LoginFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
-        // تم إضافة السطر ده عشان يضمن إنها تفتح مكبرة لو اللي قبلها كانت مكبرة
+        //  عشان يضمن إنها تفتح مكبرة لو اللي قبلها كانت مكبرة
         setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
@@ -45,7 +46,6 @@ public class LoginFrame extends JFrame {
         add(mainPanel);
     }
 
-    // ============== LEFT PANEL ==============
     private JPanel createLeftPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(ColorPalette.PRIMARY);
@@ -53,7 +53,6 @@ public class LoginFrame extends JFrame {
 
         panel.add(Box.createVerticalGlue());
 
-        // ===== صورة اللوجو (رجعت زي ما كانت) =====
         JLabel iconLabel = new JLabel();
         java.net.URL logoURL = getClass().getResource("/images/logo.png");
         if (logoURL != null) {
@@ -86,7 +85,6 @@ public class LoginFrame extends JFrame {
         return panel;
     }
 
-    // ============== RIGHT PANEL (الفورم) ==============
     private JPanel createRightPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(ColorPalette.BACKGROUND);
@@ -133,15 +131,22 @@ public class LoginFrame extends JFrame {
         passwordField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCBD5E0), 1),
                 new EmptyBorder(5, 10, 5, 10)
+                // بنجيب قيمته بـ getPassword() (بيرجع char[] مش String، عشان الأمان)
         ));
 
-        // Error label
+        // Error
+
+        //new JLabel(" ") → لابل فاضي (مسافة عشان ياخد مكان)
+        // لون أحمر (DANGER) عشان رسائل الخطأ
+        // بيتغير نصه لما يحصل خطأ
         errorLabel = new JLabel(" ");
         errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         errorLabel.setForeground(ColorPalette.DANGER);
         errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Login Button
+        //بنعمل زرار "Login" بـ ميثود createStyledButton
+        // بنربطه بـ ActionListener عن طريق Anonymous Inner Class
         JButton loginBtn = createStyledButton("Login");
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.addActionListener(new ActionListener() {
@@ -177,9 +182,13 @@ public class LoginFrame extends JFrame {
 
         return panel;
     }
-
+    // الميثود الاهم ف ال class
     private void handleLogin() {
-        String username = usernameField.getText().trim();
+        String username = usernameField.getText().trim(); //  بيقرأ النص اللي اليوزر كتبه في الخانة
+
+        //  trim  يشيل المسافات الزيادة من قبل وبعد النص
+        // ليه char[] مش String؟ Strings في Java بتفضل في الذاكرة فترة أطول، فلو حد كان عنده وصول للذاكرة
+        //ممكن يقرأ الباسورد. الـ char[] نقدر نمسحه فوراً بعد ما نستخدمه.
         String password = new String(passwordField.getPassword()).trim();
 
         if (username.isEmpty() || password.isEmpty()) {
@@ -192,10 +201,10 @@ public class LoginFrame extends JFrame {
 
         if (user != null) {
             DashboardFrame dashboard = new DashboardFrame(user);
-            // التعديل: نقل حالة التكبير للداشبورد عشان ميكشش ويصغر
+            // نقل حالة التكبير للداشبورد عشان ميصغررش
             dashboard.setExtendedState(this.getExtendedState());
             dashboard.setVisible(true);
-            this.dispose();
+            this.dispose(); // close login page
         } else {
             showError("Invalid username or password");
             passwordField.setText("");

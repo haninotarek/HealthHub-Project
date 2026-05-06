@@ -24,6 +24,7 @@ public class DoctorPanel extends JPanel {
     private int selectedDoctorId = -1;
     private TableRowSorter<DefaultTableModel> rowSorter;
 
+    // يبني الشاشة كلها اول متفتح cocstrucor فاضي
     public DoctorPanel() {
         doctorDAO = new DoctorDAO();
         setLayout(new BorderLayout(0, 16));
@@ -37,16 +38,16 @@ public class DoctorPanel extends JPanel {
         add(title, BorderLayout.NORTH);
 
         JPanel center = new JPanel(new BorderLayout(0, 16));
-        center.setOpaque(false);
-        center.add(buildDoctorForm(), BorderLayout.NORTH);
-        center.add(buildTableSection(), BorderLayout.CENTER);
+        center.setOpaque(false); // شفافة
+        center.add(buildDoctorForm(), BorderLayout.NORTH); // form up
+        center.add(buildTableSection(), BorderLayout.CENTER); // table down
         add(center, BorderLayout.CENTER);
 
-        loadTableData();
+        loadTableData(); // هات الدكاتره
     }
 
     private JPanel buildDoctorForm() {
-        // الـ Card المنحني زي البيشنتس
+        // الـ Card المنحني كشكل
         JPanel card = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -107,10 +108,10 @@ public class DoctorPanel extends JPanel {
         btnPanel.add(btnAdd); btnPanel.add(btnUpdate); btnPanel.add(btnDelete);
         card.add(btnPanel, gbc);
 
-        // Listeners (نفس منطقك الأصلي)
+        // Listeners
         btnAdd.addActionListener(e -> {
-            if(txtName.getText().trim().isEmpty()) return;
-            Doctor d = new Doctor(0, txtName.getText(), comboSpec.getSelectedItem().toString(), txtPhone.getText(), txtEmail.getText());
+            if(txtName.getText().trim().isEmpty()) return; // if name empty stop
+            Doctor d = new Doctor(0, txtName.getText(), comboSpec.getSelectedItem().toString(), txtPhone.getText(), txtEmail.getText()); // collect data fron form,create ob
             if (doctorDAO.addDoctor(d)) { loadTableData(); clearFields(); }
         });
 
@@ -123,6 +124,7 @@ public class DoctorPanel extends JPanel {
 
         btnDelete.addActionListener(e -> {
             if (selectedDoctorId != -1) {
+                // pop up
                 if (JOptionPane.showConfirmDialog(this, "Delete?", "Confirm", 0) == 0) {
                     if (doctorDAO.deleteDoctor(selectedDoctorId)) { loadTableData(); clearFields(); }
                 }
@@ -132,18 +134,22 @@ public class DoctorPanel extends JPanel {
         return card;
     }
 
+    //search,table
     private JPanel buildTableSection() {
         JPanel wrapper = new JPanel(new BorderLayout(0, 10));
         wrapper.setOpaque(false);
 
+        //search tf,label
         txtSearch = createStyledField();
         JPanel searchP = new JPanel(new BorderLayout(10, 0));
         searchP.setOpaque(false);
         searchP.add(new JLabel(" Search Doctor:"), BorderLayout.WEST);
         searchP.add(txtSearch, BorderLayout.CENTER);
 
+        //arr
         String[] columns = {"ID", "Name", "Specialization", "Phone", "Email"};
         tableModel = new DefaultTableModel(columns, 0) {
+            // no writing in table
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         table = new JTable(tableModel);
@@ -157,11 +163,12 @@ public class DoctorPanel extends JPanel {
                 l.setForeground(Color.WHITE);
                 l.setHorizontalAlignment(JLabel.CENTER);
                 l.setFont(new Font("Segoe UI", Font.BOLD, 13));
-                l.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
+                l.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5)); // space inside cells
                 return l;
             }
         });
 
+        // centering tables to all columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         for(int i=0; i<table.getColumnCount(); i++) table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
@@ -169,19 +176,20 @@ public class DoctorPanel extends JPanel {
         table.setRowHeight(35);
         table.setSelectionBackground(new Color(230, 240, 255));
 
-        JScrollPane scroll = new JScrollPane(table);
+        JScrollPane scroll = new JScrollPane(table); //container to add scroll
         scroll.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
 
+        // add to panel
         wrapper.add(searchP, BorderLayout.NORTH);
         wrapper.add(scroll, BorderLayout.CENTER);
 
-        // Search Logic
+        // Search Logic,listener
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { filter(); }
             @Override public void removeUpdate(DocumentEvent e) { filter(); }
             @Override public void changedUpdate(DocumentEvent e) { filter(); }
             void filter() {
-                String t = txtSearch.getText();
+                String t = txtSearch.getText(); //return what i wrote
                 if(t.isEmpty()) table.setRowSorter(null);
                 else {
                     TableRowSorter<DefaultTableModel> s = new TableRowSorter<>(tableModel);
@@ -191,12 +199,13 @@ public class DoctorPanel extends JPanel {
             }
         });
 
+        // when selecting a row
         table.getSelectionModel().addListSelectionListener(e -> {
-            int vr = table.getSelectedRow();
+            int vr = table.getSelectedRow(); //رقم الصف
             if (vr != -1) {
                 int r = table.convertRowIndexToModel(vr);
                 selectedDoctorId = (int) tableModel.getValueAt(r, 0);
-                txtName.setText((String) tableModel.getValueAt(r, 1));
+                txtName.setText((String) tableModel.getValueAt(r, 1)); // doc name back to textbox for uodate,etc..
                 comboSpec.setSelectedItem((String) tableModel.getValueAt(r, 2));
                 txtPhone.setText((String) tableModel.getValueAt(r, 3));
                 txtEmail.setText((String) tableModel.getValueAt(r, 4));
@@ -219,6 +228,7 @@ public class DoctorPanel extends JPanel {
         c.setPreferredSize(new Dimension(0, 38));
     }
 
+    // func for a ready button with a style
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setBackground(bg); btn.setForeground(fg);
@@ -227,8 +237,9 @@ public class DoctorPanel extends JPanel {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setPreferredSize(new Dimension(120, 35));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        //action
         btn.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(fg); btn.setForeground(Color.WHITE); }
+            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(fg); btn.setForeground(Color.WHITE); } // swipe colors
             @Override public void mouseExited(MouseEvent e) { btn.setBackground(bg); btn.setForeground(fg); }
         });
         return btn;
@@ -240,6 +251,7 @@ public class DoctorPanel extends JPanel {
         for (Doctor d : doctors) tableModel.addRow(new Object[]{d.getId(), d.getName(), d.getSpecialization(), d.getPhone(), d.getEmail()});
     }
 
+    //clearing form after entering data
     private void clearFields() {
         txtName.setText(""); txtPhone.setText(""); txtEmail.setText("");
         comboSpec.setSelectedIndex(0); selectedDoctorId = -1;
