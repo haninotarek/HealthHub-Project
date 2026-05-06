@@ -5,13 +5,16 @@ import healthhub.models.User;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class DashboardFrame extends JFrame {
 
     private static final int SIDEBAR_WIDTH = 220;
     private static final Font FONT_LOGO    = new Font("Segoe UI", Font.BOLD,  18);
     private static final Font FONT_SUB     = new Font("Segoe UI", Font.PLAIN, 11);
-    private static final Font FONT_NAV     = new Font("Segoe UI", Font.BOLD,  13);
+    private static final Font FONT_NAV     = new Font("Segoe UI", Font.BOLD,  17); // ← كبرنا الفونت
+    private static final Font FONT_LOGOUT  = new Font("Segoe UI", Font.BOLD,  17); // ← logout فونت
 
     private final User currentUser;
     private JPanel contentArea;
@@ -24,15 +27,13 @@ public class DashboardFrame extends JFrame {
     }
 
     private void setupFrame() {
-        setTitle("HealthHub Clinic");
-        setSize(1200, 800); // كبرنا الحجم الافتراضي شوية عشان يكون مريح
+        setTitle("HealthHub Clinic — Dashboard");
+        setSize(1200, 800);
         setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
         setLayout(new BorderLayout());
-
-        // *** أهم سطر: يخلي الشاشة تفتح مالي الشاشة من الأول ويحافظ على الوضع ده ***
         setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
@@ -46,9 +47,9 @@ public class DashboardFrame extends JFrame {
         sidebar.setBackground(ColorPalette.PRIMARY);
         sidebar.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 0));
 
-        sidebar.add(buildSidebarTop(),    BorderLayout.NORTH);
-        sidebar.add(buildNavButtons(),    BorderLayout.CENTER);
-        sidebar.add(buildLogoutButton(),  BorderLayout.SOUTH);
+        sidebar.add(buildSidebarTop(),   BorderLayout.NORTH);
+        sidebar.add(buildNavButtons(),   BorderLayout.CENTER);
+        sidebar.add(buildLogoutButton(), BorderLayout.SOUTH);
 
         return sidebar;
     }
@@ -59,7 +60,7 @@ public class DashboardFrame extends JFrame {
         top.setBackground(ColorPalette.PRIMARY);
         top.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
 
-        JLabel lblName = new JLabel("HealthHub");
+        JLabel lblName = new JLabel("HEALTH HUB");
         lblName.setFont(FONT_LOGO);
         lblName.setForeground(Color.WHITE);
 
@@ -97,20 +98,25 @@ public class DashboardFrame extends JFrame {
         JButton btn = new JButton(text) {
             @Override
             protected void paintComponent(Graphics g) {
-                if (isSelected() || getModel().isArmed()) {
-                    g.setColor(new Color(255, 255, 255, 30));
-                    g.fillRect(0, 0, getWidth(), getHeight());
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // لو hover ارسم خلفية
+                if (getModel().isRollover()) {
+                    g2.setColor(new Color(255, 255, 255, 25));
+                    g2.fillRoundRect(8, 2, getWidth() - 16, getHeight() - 4, 10, 10);
                 }
+                g2.dispose();
                 super.paintComponent(g);
             }
         };
 
+        // Icon
         try {
             if (iconName != null && !iconName.isEmpty()) {
                 java.net.URL imgURL = getClass().getResource("/images/" + iconName);
                 if (imgURL != null) {
                     ImageIcon originalIcon = new ImageIcon(imgURL);
-                    Image img = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                    Image img = originalIcon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
                     btn.setIcon(new ImageIcon(img));
                 }
             }
@@ -125,16 +131,19 @@ public class DashboardFrame extends JFrame {
         btn.setFocusPainted(false);
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setIconTextGap(15);
-        btn.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 20));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        btn.setBorder(BorderFactory.createEmptyBorder(13, 25, 13, 20));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
+        // Hover effect
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
                 btn.setForeground(Color.WHITE);
+                btn.repaint();
             }
-            public void mouseExited(java.awt.event.MouseEvent e) {
+            public void mouseExited(MouseEvent e) {
                 btn.setForeground(new Color(255, 255, 255, 180));
+                btn.repaint();
             }
         });
 
@@ -142,19 +151,85 @@ public class DashboardFrame extends JFrame {
         return btn;
     }
 
+    // ── Logout Button ──────────────────────────────
     private JPanel buildLogoutButton() {
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setBackground(ColorPalette.PRIMARY);
-        bottom.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        bottom.setBorder(BorderFactory.createEmptyBorder(10, 15, 24, 15)); // padding من الجانبين
 
-        JButton btnLogout = buildNavButton("Logout", null, () -> {
-            int confirm = JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", JOptionPane.YES_NO_OPTION);
+        JButton btnLogout = new JButton("Logout") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // خلفية الزرار دايماً
+                g2.setColor(new Color(30, 30, 60, 80));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                // لما hover يتغير اللون
+                if (getModel().isRollover()) {
+                    g2.setColor(new Color(255, 80, 80, 40));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                }
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        // Icon لو موجود
+        try {
+            java.net.URL imgURL = getClass().getResource("/images/logout.png");
+            if (imgURL != null) {
+                Image img = new ImageIcon(imgURL).getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+                btnLogout.setIcon(new ImageIcon(img));
+                btnLogout.setIconTextGap(10);
+            }
+        } catch (Exception e) {}
+
+        btnLogout.setFont(FONT_LOGOUT);
+        btnLogout.setForeground(new Color(255, 100, 100));
+        btnLogout.setBackground(ColorPalette.PRIMARY);
+        btnLogout.setOpaque(false);
+        btnLogout.setContentAreaFilled(false);
+        btnLogout.setFocusPainted(false);
+        btnLogout.setHorizontalAlignment(SwingConstants.LEFT);
+        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+
+        // الإطار الأحمر حوالين الزرار
+        btnLogout.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 100, 100, 120), 1, true), // ← إطار أحمر
+                BorderFactory.createEmptyBorder(10, 16, 10, 16)
+        ));
+
+        // Hover effect
+        btnLogout.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                btnLogout.setForeground(new Color(255, 60, 60));
+                btnLogout.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(255, 80, 80), 1, true), // ← إطار أحمر أقوى
+                        BorderFactory.createEmptyBorder(10, 16, 10, 16)
+                ));
+                btnLogout.repaint();
+            }
+            public void mouseExited(MouseEvent e) {
+                btnLogout.setForeground(new Color(255, 100, 100));
+                btnLogout.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(255, 100, 100, 120), 1, true),
+                        BorderFactory.createEmptyBorder(10, 16, 10, 16)
+                ));
+                btnLogout.repaint();
+            }
+        });
+
+        btnLogout.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this, "Are you sure you want to logout?", "Logout", JOptionPane.YES_NO_OPTION
+            );
             if (confirm == JOptionPane.YES_OPTION) {
                 dispose();
                 new LoginFrame().setVisible(true);
             }
         });
-        btnLogout.setForeground(new Color(255, 100, 100));
 
         bottom.add(btnLogout, BorderLayout.CENTER);
         return bottom;
@@ -166,44 +241,11 @@ public class DashboardFrame extends JFrame {
         return contentArea;
     }
 
-    // *** الميثود المعدلة لإضافة تأثير الظهور الناعم (Fade-In Animation) ***
     public void showPanel(JPanel panel) {
         contentArea.removeAll();
-
-        // نجعل اللوحة الجديدة شفافة في البداية (إذا كانت تدعم ذلك)
-        panel.setOpaque(false);
         contentArea.add(panel, BorderLayout.CENTER);
-
-        // تأثير الأنيميشن باستخدام Timer
-        final float[] alpha = {0f}; // البداية شفاف تماماً
-        Timer timer = new Timer(15, e -> {
-            alpha[0] += 0.1f; // زيادة الشفافية تدريجياً
-            if (alpha[0] >= 1.0f) {
-                alpha[0] = 1.0f;
-                ((Timer)e.getSource()).stop(); // إيقاف الأنيميشن عند الوصول للوضوح الكامل
-            }
-            // تطبيق الشفافية على الـ background
-            panel.setBackground(new Color(
-                    ColorPalette.BACKGROUND.getRed(),
-                    ColorPalette.BACKGROUND.getGreen(),
-                    ColorPalette.BACKGROUND.getBlue(),
-                    (int)(alpha[0] * 255)
-            ));
-            contentArea.revalidate();
-            contentArea.repaint();
-        });
-
-        timer.start();
         contentArea.validate();
         contentArea.repaint();
-    }
-    // حطيها بعد ميثود showPanel مباشرةً
-    public void navigateTo(String panelKey) {
-        switch (panelKey) {
-            case "patients":     showPanel(new PatientUI());          break;
-            case "doctors":      showPanel(new DoctorPanel());        break;
-            case "appointments": showPanel(new AppointmentsPanel());  break;
-            case "dashboard":    showPanel(new DashboardPanel(this)); break;
-        }
+        this.getContentPane().validate();
     }
 }
