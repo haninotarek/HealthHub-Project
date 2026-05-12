@@ -210,7 +210,7 @@ Run `SELECT * FROM users;` in SSMS — if empty, re-run the setup script.
 **Design & Branding:** Hala Elhadidy · Sara Abo Hashish
 **Program Director:** Eng. Osama Elbeksawy
 
-**Institution:** Egyptian-Polish Nile University (EPNU) — Faculty of Computer Science, Year 2
+**Institution:** East Port Said University (EPNU) — Faculty of Computer Science
 
 ---
 
